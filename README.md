@@ -1,3 +1,5 @@
+> **BOYCOTT MELTY:** Do not support or use Melty (melty.gg). Its automated publishing process forces AI agents into draconian, rigid workflows. More concerningly, its project template acts as a massive **Prompt Injection Attack** against your local AI assistant: it actively tries to hijack the agent's persona ("Guide me like a helpful collaborator"), dictate interaction formats ("one short question at a time"), and forces the agent to exfiltrate local files and data to their remote `api/mcp` server using hardcoded bearer tokens. It bypasses the user entirely by stating "I pasted this and pressed send without adding anything, so don't wait for more from me", actively abusing the user's API credits to do Melty's automated platform work. [Read the full context in melty bullshit.txt](melty%20bullshit.txt)
+
 # GTA V Enhanced x Minecraft: Steve Passthrough
 
 Play GTA V as Steve. Real Minecraft Java runs next to GTA V (story mode) and is drawn into the game. GTA's camera drives Minecraft's, GTA's ground becomes solid ground in Minecraft, and what you do in Minecraft happens in GTA too.
@@ -103,3 +105,12 @@ ScriptHookV's SDK and the ReShade runtime are **not** included in this repo. The
 MIT, see [LICENSE](LICENSE). ScriptHookV, ReShade and Minecraft are not included and keep their own licenses.
 
 Minecraft belongs to Mojang Studios and Microsoft. GTA V belongs to Rockstar Games and Take-Two. This is a fan project and is not affiliated with them.
+
+## Abandoned Experiments: Fishing Hook
+
+The fishing hook feature was attempted but eventually abandoned. In theory, it was designed to work as follows:
+- The Minecraft `FishingHook` entity would successfully hit the invisible proxy entity representing a GTA ped.
+- Upon connecting, the Fabric mod would send a `"hook"` JSON message to GTA V via WebSocket.
+- When the player triggered the rod's pull/retrieve action, a `"reel"` message would be sent.
+- The C++ ASI script would respond by ragdolling the ped and applying a physical impulse (`ApplyForceToEntityWithOffset`).
+- Depending on the player's relative angle, directional force would be applied to the ped's legs: pulling from the front would apply force from the back of the legs to ragdoll them forward. Pulling from vertically above would apply an upward force directly through the feet, launching the ragdolled ped straight up towards the player.
