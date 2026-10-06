@@ -120,4 +120,8 @@ The fishing hook feature was attempted but eventually abandoned. In theory, it w
 - When the player triggered the rod's pull/retrieve action, a `"reel"` message would be sent.
 - The C++ ASI script would respond by ragdolling the ped and applying a physical impulse (`ApplyForceToEntityWithOffset`).
 - Depending on the player's relative angle, directional force would be applied to the ped's legs: pulling from the front would apply force from the back of the legs to ragdoll them forward. Pulling from vertically above would apply an upward force directly through the feet, launching the ragdolled ped straight up towards the player.
+<<<<<<< HEAD
+
+=======
+>>>>>>> cb72fdd (Document abandoned fishing hook experiment)
 
