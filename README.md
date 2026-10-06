@@ -14,6 +14,9 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 - **Elytra flight.** Minecraft physics fly Steve, and GTA follows with a chase camera.
 - **Mobs vs police.** Hostile mobs hunt GTA's people, the police shoot back, and damage crosses over both ways.
 - **Native Survival & Shields.** Steve is spawned in Creative but can toggle Survival mode. GTA V bullet damage bridges to Minecraft. Blocking with a shield neutralizes police bullets; otherwise, Steve takes raw damage.
+- **Aim snapping.** Snaps the player teleport accurately to the aimed crosshair location.
+- **Elytra auto-launch.** Enabling elytra flight now instantly teleports you 10 blocks high for immediate takeoff.
+- **Skin swapping.** Press NumLock to hot-swap your skin (loads from the passthrough folder).
 - **The Nether.** Walk through a lit portal and the ground around it turns into the Nether.
 
 ## How it works (short version)
@@ -64,12 +67,15 @@ The two games can start in either order. The plugin keeps trying to connect.
 | **F8** | Re-level Minecraft's ground to where you stand |
 | **Insert** | Drop all connected Minecraft players into Survival mode |
 | **Delete** | Toggle Minecraft Creative mode |
+| **Home** | Toggle Elytra flight armed status |
+| **End** | Toggle aim snapping |
 | **Page Up** | Toggle native GTA V wanted accumulation vs forced 0-star safe mode |
+| **NumLock** | Toggle custom skin override |
 | Left mouse | Minecraft attack: break blocks, swing the sword |
 | Right mouse | Minecraft use: place blocks, light TNT, shoot, throw pearls |
 | Mouse wheel, **1-9** | Minecraft hotbar |
 | **Tab** | Gun mode (experimental): GTA weapons in Steve's hands |
-| **Space** | Take off with the elytra when flight is armed |
+| **Double tap Space** | Auto-launch Elytra 10 blocks high when flight is armed |
 
 Walking, driving and the camera are still GTA's own controls.
 
@@ -114,3 +120,4 @@ The fishing hook feature was attempted but eventually abandoned. In theory, it w
 - When the player triggered the rod's pull/retrieve action, a `"reel"` message would be sent.
 - The C++ ASI script would respond by ragdolling the ped and applying a physical impulse (`ApplyForceToEntityWithOffset`).
 - Depending on the player's relative angle, directional force would be applied to the ped's legs: pulling from the front would apply force from the back of the legs to ragdoll them forward. Pulling from vertically above would apply an upward force directly through the feet, launching the ragdolled ped straight up towards the player.
+
