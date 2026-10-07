@@ -195,10 +195,14 @@ namespace
 	void props_clear_all();
 	std::vector<std::pair<int, int>> g_spiral;
 	std::atomic<bool> g_toggle{false};
+	std::atomic<bool> g_skin_toggle{false};
 	std::atomic<bool> g_relevel{false};
 	std::atomic<bool> g_survival{false};
+	std::atomic<bool> g_arm_flight{false};
 	std::atomic<bool> g_creative{false};
 	std::atomic<bool> g_wanted_toggle{false};
+	std::atomic<bool> g_tp_snap_toggle{false};
+	bool g_tp_snap_enabled = false;
 
 	// Controls GTA must not act on while Minecraft owns the mouse: attacking/aiming, melee, weapon selection.
 	const int kDisabledControls[] = {
@@ -2058,6 +2062,13 @@ namespace
 			g_enabled = !g_enabled;
 			natives::Notify(g_enabled ? "Minecraft passthrough ~g~on" : "Minecraft passthrough ~r~off");
 		}
+		if (g_skin_toggle.exchange(false))
+		{
+			static bool isHerobrine = false;
+			isHerobrine = !isHerobrine;
+			sendf("{\"t\":\"skin\",\"id\":\"%s\"}", isHerobrine ? "herobrine" : "steve");
+			natives::Notify(isHerobrine ? "Skin set to ~r~custom skin" : "Skin set to ~g~default skin");
+		}
 		if (g_survival.exchange(false))
 		{
 			sendf("{\"t\":\"cmd\",\"c\":\"gamemode survival @a\"}");
@@ -2067,6 +2078,28 @@ namespace
 		{
 			sendf("{\"t\":\"cmd\",\"c\":\"gamemode creative @a\"}");
 			natives::Notify("Minecraft ~g~Creative Mode");
+		}
+		if (g_arm_flight.exchange(false))
+		{
+			g_drive.user = true;
+			g_drive.armed = !g_drive.armed;
+			if (g_drive.armed)
+			{
+				g_drive.armHeading = natives::GetEntityHeading(ped);
+				g_drive.armPitch = -20.0f;
+				g_drive.armSpeed = 1.0f;
+				g_drive.armDrop = 0.6f;
+				g_drive.armHold = 3000;
+				g_drive.armZ = natives::GetEntityCoords(ped, TRUE).z;
+				g_drive.armAfter = natives::GetGameTimer() + 500;
+				natives::Notify("Elytra flight ~g~enabled~s~ (Double-jump to take off)");
+			}
+			else
+			{
+				if (g_drive.on)
+					drive_set(ped, false);
+				natives::Notify("Elytra flight ~r~disabled");
+			}
 		}
 		if (g_wanted_toggle.exchange(false))
 		{
@@ -2084,6 +2117,12 @@ namespace
 				natives::ClearPlayerWantedLevel(player);
 				natives::Notify("Wanted mode ~r~off");
 			}
+		}
+				if (g_tp_snap_toggle.exchange(false))
+		{
+			g_tp_snap_enabled = !g_tp_snap_enabled;
+			sendf("{\"t\":\"tpsnap\"}");
+			natives::Notify(g_tp_snap_enabled ? "Third-person aim snap ~g~ON" : "Third-person aim snap ~r~OFF");
 		}
 		const bool on = g_enabled && g_ws.connected();
 		const bool hidden = natives::IsPauseMenuActive() || natives::IsScreenFadedOut() || natives::IsCutsceneActive() || natives::IsPlayerSwitchInProgress();
@@ -2135,7 +2174,7 @@ namespace
 			sendf("{\"t\":\"view\",\"w\":%d,\"h\":%d}", int(bw * scale + 0.5), int(bh * scale + 0.5));
 		}
 
-		const Vector3 p = natives::GetEntityCoords(ped, TRUE);
+		Vector3 p = natives::GetEntityCoords(ped, TRUE);
 		if (!g_haveOffset || g_relevel.exchange(false))
 		{
 			float groundZ = 0.0f;
@@ -2150,10 +2189,26 @@ namespace
 			}
 		}
 
-		// the player's take-off: Space (jump) while armed, or a real fall off something tall
-		const bool takeOff = g_drive.user && natives::GetGameTimer() >= g_drive.armAfter && natives::IsDisabledControlJustPressed(0, 22);
+		// the player's take-off: Double Space (jump) while armed, or a real fall off something tall
+		static int lastSpacePressTime = 0;
+		bool doubleSpace = false;
+		if (natives::IsDisabledControlJustPressed(0, 22))
+		{
+			int now = natives::GetGameTimer();
+			if (now - lastSpacePressTime < 400)
+				doubleSpace = true;
+			lastSpacePressTime = now;
+		}
+		const bool takeOff = g_drive.user && natives::GetGameTimer() >= g_drive.armAfter && doubleSpace;
 		if (g_drive.armed && !g_drive.on && (takeOff || drive_should_launch(ped)))
 		{
+			if (takeOff)
+			{
+				Vector3 pos = natives::GetEntityCoords(ped, TRUE);
+				natives::SetEntityCoordsNoOffset(ped, pos.x, pos.y, pos.z + 10.0f);
+				p = natives::GetEntityCoords(ped, TRUE);
+				sendf("{\"t\":\"cmd\",\"c\":\"execute as @a at @s run tp @s ~ ~10 ~\"}");
+			}
 			// off the edge: Minecraft takes over (elytra, launched along the arm heading/pitch, or where the player looks)
 			const Vector3 look = natives::GetGameplayCamRot(2);
 			drive_set(ped, true);
@@ -2206,7 +2261,7 @@ namespace
 		natives::InvalidateIdleCam();
 		natives::InvalidateCinematicVehicleIdleMode();
 		natives::HideHudAndRadarThisFrame();
-		natives::TheFeedHideThisFrame();
+		// natives::TheFeedHideThisFrame();
 		natives::HideHelpTextThisFrame();
 		if (!g_playerHidden)
 		{
@@ -2306,6 +2361,12 @@ namespace
 			g_creative = true;
 		else if (key == VK_PRIOR)
 			g_wanted_toggle = true;
+		else if (key == VK_NEXT)
+			g_tp_snap_toggle = true;
+		else if (key == VK_END)
+			g_arm_flight = true;
+		else if (key == VK_NUMLOCK)
+			g_skin_toggle = true;
 	}
 }
 
@@ -2326,3 +2387,7 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID)
 	}
 	return TRUE;
 }
+
+
+
+

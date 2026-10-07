@@ -79,8 +79,18 @@ final class ClientInput {
 				SDLVideo.SDL_SetWindowSize(handle, w, h);
 				SDLVideo.SDL_SyncWindow(handle);
 			}
+			case "tpsnap" -> {
+				PlayerSync.aimSnapEnabled = !PlayerSync.aimSnapEnabled;
+				if (minecraft.player != null) {
+					minecraft.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("Third-person controls: " + (PlayerSync.aimSnapEnabled ? "ON" : "OFF")));
+				}
+			}
 			default -> {
 			}
 		}
 	}
 }
+
+
+
+

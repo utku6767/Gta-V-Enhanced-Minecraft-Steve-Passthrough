@@ -104,6 +104,7 @@ public final class HostLink extends WebSocketServer {
 				case "netheroff" -> Nether.stop();
 				case "nethersync" -> Nether.resync();
 				case "glide" -> WorldBridge.glide(!m.has("on") || m.get("on").getAsBoolean(), m.has("speed") ? m.get("speed").getAsDouble() : 1.2);
+				case "skin" -> PassthroughClient.toggleSkin(m.get("id").getAsString().equals("herobrine"));
 				default -> {
 					Minecraft minecraft = Minecraft.getInstance();
 					minecraft.execute(() -> ClientInput.handle(minecraft, m));

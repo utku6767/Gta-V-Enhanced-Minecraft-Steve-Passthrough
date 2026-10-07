@@ -53,8 +53,9 @@ public class PassthroughClient implements ClientModInitializer {
 		"gamerule player_movement_check false",
 		"time set noon",
 		"weather clear",
+		"gamemode creative @a",
 		"clear @a",
-		"item replace entity @a hotbar.0 with minecraft:ender_pearl 16",
+		"item replace entity @a hotbar.0 with minecraft:firework_rocket[fireworks={flight_duration:3}] 64",
 		"item replace entity @a hotbar.1 with minecraft:diamond_sword",
 		"item replace entity @a hotbar.2 with minecraft:crossbow[enchantments={multishot:1,quick_charge:3}]",
 		"item replace entity @a hotbar.3 with minecraft:bow[enchantments={power:5,infinity:1}]",
@@ -71,6 +72,26 @@ public class PassthroughClient implements ClientModInitializer {
 	/** Server ticks until the setup commands run (the player isn't in the player list yet when JOIN fires). */
 	private static int setupIn = -1;
 	private static int respawnIn;
+
+	public static void toggleSkin(boolean herobrine) {
+		Minecraft.getInstance().execute(() -> {
+			try {
+				java.nio.file.Path modsPath = net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir().resolve("mods");
+				String path = modsPath.resolve("../passthrough/" + (herobrine ? "custom_skin.png" : "default_skin.png")).normalize().toString();
+				net.minecraft.client.renderer.texture.DynamicTexture tex = new net.minecraft.client.renderer.texture.DynamicTexture(
+					() -> herobrine ? "herobrine" : "steve",
+					com.mojang.blaze3d.platform.NativeImage.read(new java.io.FileInputStream(path))
+				);
+				net.minecraft.world.entity.player.PlayerSkin base = net.minecraft.client.resources.DefaultPlayerSkin.get(new java.util.UUID(0L, 15L));
+				Object clientAssetTex = base.getClass().getRecordComponents()[0].getAccessor().invoke(base);
+				java.lang.reflect.Method m = clientAssetTex.getClass().getMethod("texturePath");
+				net.minecraft.resources.Identifier id = (net.minecraft.resources.Identifier) m.invoke(clientAssetTex);
+				Minecraft.getInstance().getTextureManager().register(id, tex);
+			} catch (Exception e) {
+				Passthrough.LOG.error("Failed to load skin", e);
+			}
+		});
+	}
 
 	@Override
 	public void onInitializeClient() {
@@ -135,7 +156,7 @@ public class PassthroughClient implements ClientModInitializer {
 			minecraft.createWorldOpenFlows().openWorld(WORLD, () -> minecraft.gui.setScreen(new TitleScreen()));
 		} else {
 			Passthrough.LOG.info("creating world {}", WORLD);
-			LevelSettings settings = new LevelSettings("Passthrough", GameType.SURVIVAL, LevelSettings.DifficultySettings.DEFAULT, true, WorldDataConfiguration.DEFAULT);
+			LevelSettings settings = new LevelSettings("Passthrough", GameType.CREATIVE, LevelSettings.DifficultySettings.DEFAULT, true, WorldDataConfiguration.DEFAULT);
 			minecraft.createWorldOpenFlows().createFreshLevel(WORLD, settings, new WorldOptions(0L, false, false), PassthroughClient::voidWorld, minecraft.gui.screen());
 		}
 	}
@@ -150,3 +171,6 @@ public class PassthroughClient implements ClientModInitializer {
 		return WorldPresets.createNormalWorldDimensions(registries).replaceOverworldGenerator(registries, new FlatLevelSource(flat));
 	}
 }
+
+
+

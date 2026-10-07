@@ -10,6 +10,7 @@ import net.minecraft.world.phys.Vec3;
 
 /** Keeps the Minecraft player on the host's player: it stands where they stand and looks where the host camera looks. */
 public final class PlayerSync {
+	public static boolean aimSnapEnabled = false;
 	private static final double TELEPORT_SQ = 64.0 * 64.0;
 	/** How far the host's player moved over the last client tick (drives the walk animation). */
 	private static float tickDistance;
@@ -53,12 +54,14 @@ public final class PlayerSync {
 			return;
 		}
 
-		player.setYRot(p.yaw());
+				boolean snapToCamera = p.firstPerson() || (aimSnapEnabled && (player.isUsingItem() || minecraft.options.keyAttack.isDown() || minecraft.options.keyUse.isDown()));
+		float targetYaw = snapToCamera ? p.yaw() : p.bodyYaw();
+		player.setYRot(targetYaw);
 		player.setXRot(p.pitch());
-		player.yRotO = p.yaw();
+		player.yRotO = targetYaw;
 		player.xRotO = p.pitch();
-		player.yHeadRot = player.yHeadRotO = p.yaw();
-		player.yBodyRot = player.yBodyRotO = p.firstPerson() ? p.yaw() : p.bodyYaw();
+		player.yHeadRot = player.yHeadRotO = targetYaw;
+		player.yBodyRot = player.yBodyRotO = targetYaw;
 		// the model stands exactly where the host's player is this frame (not a tick behind, interpolating)
 		double x = p.firstPerson() ? p.x() : p.px();
 		double y = p.firstPerson() ? p.y() - player.getEyeHeight() : p.py();
@@ -106,3 +109,4 @@ public final class PlayerSync {
 		}
 	}
 }
+

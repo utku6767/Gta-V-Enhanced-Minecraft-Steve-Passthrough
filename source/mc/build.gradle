@@ -44,3 +44,4 @@ java {
 	sourceCompatibility = JavaVersion.VERSION_25
 	targetCompatibility = JavaVersion.VERSION_25
 }
+task printPlayerSkin { doLast { URLClassLoader loader = new URLClassLoader([new File('.gradle/loom-cache/minecraftMaven/net/minecraft/minecraft-clientOnly-7e9a32a5b8/26.3/minecraft-clientOnly-7e9a32a5b8-26.3.jar').toURI().toURL(), new File('.gradle/loom-cache/minecraftMaven/net/minecraft/minecraft-common-7e9a32a5b8/26.3/minecraft-common-7e9a32a5b8-26.3.jar').toURI().toURL()] as URL[], null); Class c = loader.loadClass('net.minecraft.world.entity.player.PlayerSkin'); println java.util.Arrays.toString(c.getConstructors()); println java.util.Arrays.toString(c.getDeclaredFields()); } }

@@ -231,5 +231,6 @@ namespace natives
 		invoke<Void>(0x202709F4C58A0424, "STRING");
 		invoke<Void>(0x6C188BE134E074AA, text);
 		invoke<int>(0x2ED7843F8F801023, FALSE, FALSE);
+		invoke<Void>(0x67C540AA08E4A6F5, -1, "Text_Arrive_Tone", "Phone_SoundSet_Default", FALSE);
 	}
 }
