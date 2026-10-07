@@ -68,7 +68,8 @@ The two games can start in either order. The plugin keeps trying to connect.
 | **Insert** | Drop all connected Minecraft players into Survival mode |
 | **Delete** | Toggle Minecraft Creative mode |
 | **Home** | Toggle Elytra flight armed status |
-| **End** | Toggle aim snapping and enable Elytra flight |
+| **End** | Enable Elytra flight |
+| **Page Down** | Toggle aim snapping |
 | **Page Up** | Toggle native GTA V wanted accumulation vs forced 0-star safe mode |
 | **NumLock** | Toggle custom skin override |
 | Left mouse | Minecraft attack: break blocks, swing the sword |
