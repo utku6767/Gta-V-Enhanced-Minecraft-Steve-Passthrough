@@ -19,6 +19,13 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 - **Skin swapping.** Press NumLock to hot-swap your skin. Place `custom_skin.png` and `default_skin.png` in a `passthrough` folder alongside your `mods` folder (i.e., `../passthrough/`).
 - **The Nether.** Walk through a lit portal and the ground around it turns into the Nether.
 
+## Possible Bugs
+
+1. The ender pearls might fall through the ground and not work when thrown far away because the collision data from GTA V was not given to Minecraft at that time.
+2. Not really a bug, but if you put TNT near a vehicle it will despawn that vehicle.
+3. TNT's might fall through the ground.
+4. Sometimes there will be graphical glitches like Steve leaving a ghost trail behind or blocks might look a little weird because of the ReShade.
+
 ## How it works (short version)
 
 An empty Minecraft world runs in the background. GTA feeds in its camera and collision data, Minecraft feeds back gameplay events (a bow shot, a creeper blowing up), and ReShade draws Minecraft's picture into GTA's frame.
