@@ -16,7 +16,7 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 - **Native Survival & Shields.** Steve is spawned in Creative but can toggle Survival mode. GTA V bullet damage bridges to Minecraft. Blocking with a shield neutralizes police bullets; otherwise, Steve takes raw damage.
 - **Aim snapping.** Snaps the player teleport accurately to the aimed crosshair location.
 - **Elytra auto-launch.** Enabling elytra flight now instantly teleports you 10 blocks high for immediate takeoff.
-- **Skin swapping.** Press NumLock to hot-swap your skin. Place `custom_skin.png` and `default_skin.png` in a `passthrough` folder alongside your `mods` folder (i.e., `../passthrough/`).
+- **Skin swapping.** Press NumLock to hot-swap your skin. Place `custom_skin.png` and `default_skin.png` in a `passthrough` folder alongside your Minecraft `mods` folder (i.e., `../passthrough/`).
 - **The Nether.** Walk through a lit portal and the ground around it turns into the Nether.
 
 ## Possible Bugs
@@ -29,8 +29,8 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 ## Custom Skins
 
 To use the NumLock skin swap feature:
-1. Navigate to your Minecraft instance folder (where your `mods` folder is located).
-2. Create a new folder next to the `mods` folder and name it `passthrough`.
+1. Navigate to your **Minecraft** instance folder (where your Minecraft `mods` folder is located). *Note: Do not confuse this with the GTA V mods folder.*
+2. Create a new folder next to the Minecraft `mods` folder and name it `passthrough`.
 3. Place your custom skin file inside the `passthrough` folder and name it `custom_skin.png`.
 4. Place the default Steve skin inside the `passthrough` folder and name it `default_skin.png`.
 5. While playing, press the **NumLock** key to instantly swap between the default and custom skin.
