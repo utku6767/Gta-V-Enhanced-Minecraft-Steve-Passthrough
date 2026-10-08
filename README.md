@@ -14,7 +14,7 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 - **Elytra flight.** Minecraft physics fly Steve, and GTA follows with a chase camera.
 - **Mobs vs police.** Hostile mobs hunt GTA's people, the police shoot back, and damage crosses over both ways.
 - **Native Survival & Shields.** Steve is spawned in Creative but can toggle Survival mode. GTA V bullet damage bridges to Minecraft. Blocking with a shield neutralizes police bullets; otherwise, Steve takes raw damage.
-- **Aim snapping.** Snaps the player teleport accurately to the aimed crosshair location.
+- **Aim snapping.** Snaps where the minecraft character is looking player crosshair in GTA V accurately when aiming with a bow or crossbow.
 - **Elytra auto-launch.** Enabling elytra flight now instantly teleports you 10 blocks high for immediate takeoff.
 - **Skin swapping.** Press NumLock to hot-swap your skin. Place `custom_skin.png` and `default_skin.png` in a `passthrough` folder alongside your Minecraft `mods` folder (i.e., `../passthrough/`).
 - **The Nether.** Walk through a lit portal and the ground around it turns into the Nether.
