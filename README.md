@@ -30,9 +30,9 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 
 To use the NumLock skin swap feature:
 1. Navigate to your **Minecraft** instance folder (where your Minecraft `mods` folder is located). *Note: Do not confuse this with the GTA V mods folder.*
-2. Create a new folder next to the Minecraft `mods` folder and name it `passthrough`.
-3. Place your custom skin file inside the `passthrough` folder and name it `custom_skin.png`.
-4. Place the default Steve skin inside the `passthrough` folder and name it `default_skin.png`.
+2. Create a new folder next to the Minecraft `mods` folder and name it `passthrough`
+3. Place your custom skin file inside the `passthrough` folder and name it `custom_skin.png`
+4. Place the default Steve skin inside the `passthrough` folder and name it `default_skin.png`
 5. While playing, press the **NumLock** key to instantly swap between the default and custom skin.
 
 ## How it works (short version)
