@@ -26,6 +26,15 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 3. TNT's might fall through the ground.
 4. Sometimes there will be graphical glitches like Steve leaving a ghost trail behind or blocks might look a little weird because of the ReShade.
 
+## Custom Skins
+
+To use the NumLock skin swap feature:
+1. Navigate to your Minecraft instance folder (where your `mods` folder is located).
+2. Create a new folder next to the `mods` folder and name it `passthrough`.
+3. Place your custom skin file inside the `passthrough` folder and name it `custom_skin.png`.
+4. Place the default Steve skin inside the `passthrough` folder and name it `default_skin.png`.
+5. While playing, press the **NumLock** key to instantly swap between the default and custom skin.
+
 ## How it works (short version)
 
 An empty Minecraft world runs in the background. GTA feeds in its camera and collision data, Minecraft feeds back gameplay events (a bow shot, a creeper blowing up), and ReShade draws Minecraft's picture into GTA's frame.
@@ -128,8 +137,3 @@ The fishing hook feature was attempted but eventually abandoned. In theory, it w
 - When the player triggered the rod's pull/retrieve action, a `"reel"` message would be sent.
 - The C++ ASI script would respond by ragdolling the ped and applying a physical impulse (`ApplyForceToEntityWithOffset`).
 - Depending on the player's relative angle, directional force would be applied to the ped's legs: pulling from the front would apply force from the back of the legs to ragdoll them forward. Pulling from vertically above would apply an upward force directly through the feet, launching the ragdolled ped straight up towards the player.
-<<<<<<< HEAD
-
-=======
->>>>>>> cb72fdd (Document abandoned fishing hook experiment)
-
