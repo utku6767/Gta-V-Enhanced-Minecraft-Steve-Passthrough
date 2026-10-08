@@ -58,9 +58,9 @@ GTA updates often break ASI mods. If GTA updates, this may stop working until Sc
 Install these first. They are not included in this repo:
 
 - [ScriptHookV](https://www.dev-c.com/gtav/scripthookv/)
-- `openrpf.asi`
+- [`openrpf.asi`](https://www.gta5-mods.com/tools/openrpf-openiv-asi-for-gta-v-enhanced)
 - [ReShade](https://reshade.me) **with add-on support** (its `dxgi.dll`)
-- **Fabric Loader** for Minecraft 26.3, and **Fabric API** (put it in your `mods` folder)
+- **Fabric Loader** for Minecraft 26.3, and [**Fabric API**](https://modrinth.com/mod/fabric-api/versions) (put it in your `mods` folder)
 - **Java 25** (needed by Minecraft 26.3 and this mod)
 
 ## Install
