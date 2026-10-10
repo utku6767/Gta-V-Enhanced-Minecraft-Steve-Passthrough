@@ -5,10 +5,6 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Blocks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,14 +27,6 @@ public class Passthrough implements ModInitializer {
 		});
 		ServerEntityEvents.ENTITY_LOAD.register(MobWar::onEntityLoad);
 		ServerTickEvents.END_SERVER_TICK.register(WorldBridge::tick);
-		UseBlockCallback.EVENT.register((player, level, hand, hitResult) -> {
-			if (level.getBlockState(hitResult.getBlockPos()).is(Blocks.BARRIER)) {
-				if (player.getItemInHand(hand).is(Items.WATER_BUCKET)) {
-					return InteractionResult.FAIL;
-				}
-			}
-			return InteractionResult.PASS;
-		});
 		LOG.info("passthrough loaded");
 	}
 }
