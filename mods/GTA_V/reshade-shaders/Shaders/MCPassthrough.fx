@@ -198,10 +198,33 @@ void PS_Composite(float4 pos : SV_Position, float2 uv : TEXCOORD, out float4 out
 			inside = true;
 			break;
 		}
+
+		if (!inside)
+		{
+			const float3 p = ray * zh;
+			const float3 pm = float3(dot(WarpRow0, p), dot(WarpRow1, p), dot(WarpRow2, p)) + WarpT;
+			if (pm.z <= -1e-3)
+			{
+				const float2 n = pm.xy / -pm.z / mcScale;
+				if (!any(abs(n) > 1.0))
+				{
+					const float2 fmuv = n * 0.5 + 0.5;
+					if (tex2D(sWorld, fmuv).a > 0.0)
+					{
+						muv = fmuv;
+						zm = max(zh - 0.1, 0.1);
+						inside = true;
+					}
+				}
+			}
+		}
 	}
 	const float4 world = inside ? tex2D(sWorld, muv) : 0.0;
 	if (!Reproject)
 		zm = mc_linear(tex2D(sDepth, muv).r);
+
+	if (world.a > 0.0 && zm > 1e8)
+		zm = max(zh - 0.1, 0.1);
 
 	outInfo = float4(0.0, 0.0, zh, 0.0);
 	if (DebugView == 1)
