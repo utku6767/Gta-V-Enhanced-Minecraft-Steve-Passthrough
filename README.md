@@ -73,10 +73,10 @@ Install these first. They are not included in this repo:
 - Install ReShade **before** copying this mod's files. If you installed ReShade **after** copying them, ReShade replaces some of the files, so copy the files from the zip's "GTA V" folder into your GTA V Enhanced folder again and overwrite when asked.
 
 1. **Install ReShade** as described above.
-2. **GTA V Enhanced files:** copy everything from this repo's `GTA_V` folder into your GTA V Enhanced game folder (overwrite if asked).
+2. **GTA V Enhanced files:** copy everything from this repo's `mods/GTA_V` folder into your GTA V Enhanced game folder (overwrite if asked).
    - This includes `MCPassthrough.asi`, `ReShade.ini`, `ReShadePreset.ini` and `reshade-shaders/`.
    - **Back up your own `ReShade.ini` and `ReShadePreset.ini` first.** Copying overwrites them.
-3. **Minecraft files:** copy the `Minecraft` folder's `passthrough-0.1.0.jar` into your Minecraft `mods` folder.
+3. **Minecraft files:** copy the `mods/Minecraft` folder's `passthrough-0.1.0.jar` into your Minecraft `mods` folder.
    - Use a launcher profile with **its own game folder**. The mod changes some options (no clouds, no view bobbing, 120 fps cap) and creates a void creative world called `passthrough`.
 4. **Launch** GTA V Enhanced (story mode) and Minecraft Fabric 26.3 at the same time. Keep the Minecraft window open, since it renders slowly when minimized.
 5. **Activate:** press **F7** in GTA to turn the passthrough on.
