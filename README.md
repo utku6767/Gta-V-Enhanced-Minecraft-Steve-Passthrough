@@ -21,10 +21,12 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 
 ## Possible Bugs
 
-1. The ender pearls might fall through the ground and not work when thrown far away because the collision data from GTA V was not given to Minecraft at that time.
-2. Not really a bug, but if you put TNT near a vehicle it will despawn that vehicle.
-3. TNT's might fall through the ground.
-4. Sometimes there will be graphical glitches like Steve leaving a ghost trail behind or blocks might look a little weird because of the ReShade.
+1. Dying in survival or losing collision? When you alt-tab to the Minecraft window, turn off "Pause Game on Focus Loss" in GTA V's settings. If it is on, GTA V stops feeding its collision data to Minecraft, so you fall through the world and die when you switch to survival. Switch modes with the Insert key in GTA V instead of `/gamemode` or `F3+F4`.
+2. Elytra in survival: boost with the first (non-explosive) rocket in your inventory. The last rocket is explosive and is meant for the crossbow, not for flight, and it damages you when used for flight.
+3. The ender pearls might fall through the ground and not work when thrown far away because the collision data from GTA V was not given to Minecraft at that time.
+4. Not really a bug, but if you put TNT near a vehicle it will despawn that vehicle.
+5. TNT's might fall through the ground.
+6. Sometimes there will be graphical glitches like Steve leaving a ghost trail behind or blocks might look a little weird because of the ReShade.
 
 ## Custom Skins
 
@@ -65,13 +67,19 @@ Install these first. They are not included in this repo:
 
 ## Install
 
-1. **GTA V Enhanced files:** copy everything from this repo's `GTA_V` folder into your GTA V Enhanced game folder.
+**ReShade setup (important):**
+- Download ReShade from the official [ReShade site](https://reshade.me) and pick the version **with full add-on support**. The normal version will not show the Minecraft overlay.
+- In the ReShade installer, choose **DirectX 10/11/12** as the rendering API. Do **not** pick OpenGL, Vulkan or DirectX 9.
+- Install ReShade **before** copying this mod's files. If you installed ReShade **after** copying them, ReShade replaces some of the files, so copy the files from the zip's "GTA V" folder into your GTA V Enhanced folder again and overwrite when asked.
+
+1. **Install ReShade** as described above.
+2. **GTA V Enhanced files:** copy everything from this repo's `GTA_V` folder into your GTA V Enhanced game folder (overwrite if asked).
    - This includes `MCPassthrough.asi`, `ReShade.ini`, `ReShadePreset.ini` and `reshade-shaders/`.
    - **Back up your own `ReShade.ini` and `ReShadePreset.ini` first.** Copying overwrites them.
-2. **Minecraft files:** copy the `Minecraft` folder's `passthrough-0.1.0.jar` into your Minecraft `mods` folder.
+3. **Minecraft files:** copy the `Minecraft` folder's `passthrough-0.1.0.jar` into your Minecraft `mods` folder.
    - Use a launcher profile with **its own game folder**. The mod changes some options (no clouds, no view bobbing, 120 fps cap) and creates a void creative world called `passthrough`.
-3. **Launch** GTA V Enhanced (story mode) and Minecraft Fabric 26.3 at the same time. Keep the Minecraft window open, since it renders slowly when minimized.
-4. **Activate:** press **F7** in GTA to turn the passthrough on.
+4. **Launch** GTA V Enhanced (story mode) and Minecraft Fabric 26.3 at the same time. Keep the Minecraft window open, since it renders slowly when minimized.
+5. **Activate:** press **F7** in GTA to turn the passthrough on.
 
 The two games can start in either order. The plugin keeps trying to connect.
 
