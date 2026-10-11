@@ -36,8 +36,8 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets;
 public class PassthroughClient implements ClientModInitializer {
 	/** The world the host plays in: an empty (void) creative world, so only what the player builds is Minecraft. */
 	private static final String WORLD = "passthrough";
-	/** Run on the server once the player has joined. */
-	private static final List<String> SETUP = List.of(
+	/** Run on the server once the player has joined: game rules applied every load. */
+	private static final List<String> RULES_SETUP = List.of(
 		"gamerule advance_time false",
 		"gamerule advance_weather false",
 		"gamerule spawn_mobs false",
@@ -52,7 +52,10 @@ public class PassthroughClient implements ClientModInitializer {
 		"gamerule show_advancement_messages false",
 		"gamerule player_movement_check false",
 		"time set noon",
-		"weather clear",
+		"weather clear"
+	);
+	/** Initial starter kit: only given once per world/player so inventory remains persistent across sessions. */
+	private static final List<String> INITIAL_ITEMS_SETUP = List.of(
 		"gamemode creative @a",
 		"clear @a",
 		"item replace entity @a hotbar.0 with minecraft:firework_rocket[fireworks={flight_duration:3}] 64",
@@ -69,6 +72,7 @@ public class PassthroughClient implements ClientModInitializer {
 	);
 	private static boolean configured;
 	private static boolean worldRequested;
+	private static boolean pendingItemSetup;
 	/** Server ticks until the setup commands run (the player isn't in the player list yet when JOIN fires). */
 	private static int setupIn = -1;
 	private static int respawnIn;
@@ -101,14 +105,27 @@ public class PassthroughClient implements ClientModInitializer {
 			ServerPlayer player = handler.player;
 			// never left gliding from a previous session: with no host yet it would glide down into the void
 			player.stopFallFlying();
-			player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+			boolean initialized = player.entityTags().contains("passthrough_initialized");
+			if (!initialized) {
+				if (player.getInventory().isEmpty()) {
+					pendingItemSetup = true;
+					player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+				}
+				player.addTag("passthrough_initialized");
+			} else {
+				pendingItemSetup = false;
+			}
 			player.getAbilities().flying = true;
 			player.onUpdateAbilities();
 			setupIn = 10;
 		});
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
 			if (setupIn > 0 && --setupIn == 0) {
-				SETUP.forEach(WorldBridge::command);
+				RULES_SETUP.forEach(WorldBridge::command);
+				if (pendingItemSetup) {
+					pendingItemSetup = false;
+					INITIAL_ITEMS_SETUP.forEach(WorldBridge::command);
+				}
 			}
 		});
 	}
