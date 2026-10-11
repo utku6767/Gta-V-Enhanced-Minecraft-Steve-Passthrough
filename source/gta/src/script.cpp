@@ -940,11 +940,42 @@ namespace
 	/// Every frame: doubles follow their mobs and report damage; GTA's people go to Minecraft; cops get targets.
 	void mobs_tick(Ped player)
 	{
+		const int now = natives::GetGameTimer();
 		if (g_pendingCops > 0 && squad_spawn_one(player))
 			--g_pendingCops;
+
+		// GTA's people near the player, 20 times a second (their feet, Minecraft coordinates).
+		// Must be streamed continuously regardless of active mobs so water currents and proxies function properly.
+		const Vector3 me = natives::GetEntityCoords(player, TRUE);
+		if (now >= g_nextPedsAt)
+		{
+			g_nextPedsAt = now + 50;
+			int handles[256];
+			const int n = worldGetAllPeds(handles, 256);
+			std::string list;
+			g_pedsSent.clear();
+			for (int i = 0; i < n && g_pedsSent.size() < 48; ++i)
+			{
+				const Ped q = handles[i];
+				if (q == player || natives::IsPedAPlayer(q) || g_doublePeds.count(q) || natives::IsPedDeadOrDying(q))
+					continue;
+				const int type = natives::GetPedType(q);
+				if (type == 28)
+					continue; // animals (birds would be hunted in the sky)
+				const Vector3 o = natives::GetEntityCoords(q, TRUE);
+				const float dx = o.x - me.x, dy = o.y - me.y;
+				if (dx * dx + dy * dy > 60.0f * 60.0f)
+					continue;
+				char e[96];
+				snprintf(e, sizeof(e), "%s[%d,%.3f,%.3f,%.3f]", list.empty() ? "" : ",", q, o.x, o.z - 1.0f + g_yOffset, -o.y);
+				list += e;
+				g_pedsSent.insert(q);
+			}
+			g_ws.send("{\"t\":\"peds\",\"p\":[" + list + "]}");
+		}
+
 		if (g_mobs.empty())
 			return;
-		const int now = natives::GetGameTimer();
 		if (now - g_mobsSeenAt > 3000)
 		{
 			// Minecraft stopped listing its mobs without an empty list (disconnect, pause): nothing to fight
@@ -985,37 +1016,6 @@ namespace
 				natives::SetEntityHealth(m.ped, kDoubleHealth);
 				m.health = natives::GetEntityHealth(m.ped);
 			}
-		}
-
-		// GTA's people near the player, 20 times a second (their feet, Minecraft coordinates)
-		const Vector3 me = natives::GetEntityCoords(player, TRUE);
-		if (now >= g_nextPedsAt)
-		{
-			g_nextPedsAt = now + 50;
-			int handles[256];
-			const int n = worldGetAllPeds(handles, 256);
-			std::string list;
-			g_pedsSent.clear();
-			for (int i = 0; i < n && g_pedsSent.size() < 48; ++i)
-			{
-				const Ped q = handles[i];
-				if (q == player || g_doublePeds.count(q) || natives::IsPedDeadOrDying(q))
-					continue;
-				const int type = natives::GetPedType(q);
-				if (type == 28)
-					continue; // animals (birds would be hunted in the sky)
-				if (g_huntCopsOnly && type != 6 && type != 27 && type != 29)
-					continue;
-				const Vector3 o = natives::GetEntityCoords(q, TRUE);
-				const float dx = o.x - me.x, dy = o.y - me.y;
-				if (dx * dx + dy * dy > 60.0f * 60.0f)
-					continue;
-				char e[96];
-				snprintf(e, sizeof(e), "%s[%d,%.3f,%.3f,%.3f]", list.empty() ? "" : ",", q, o.x, o.z - 1.0f + g_yOffset, -o.y);
-				list += e;
-				g_pedsSent.insert(q);
-			}
-			g_ws.send("{\"t\":\"peds\",\"p\":[" + list + "]}");
 		}
 
 		// police (spawned or not) fight the nearest double; re-tasked only when that one is gone
@@ -1930,17 +1930,17 @@ namespace
 			if (!natives::IsPedRagdoll(ped))
 			{
 				natives::SetPedToRagdoll(ped, 4000);
-				natives::ApplyForceToEntity(ped, it->second.pushX * 6.0f, it->second.pushY * 6.0f, 1.2f);
+				natives::ApplyForceToEntity(ped, it->second.pushX * 8.0f, it->second.pushY * 8.0f, 1.5f);
 			}
 			else
 			{
 				// Continuously carry the ragdolled ped forward along the water current
 				const Vector3 vel = natives::GetEntityVelocity(ped);
 				const float speedH = std::sqrt(vel.x * vel.x + vel.y * vel.y);
-				constexpr float kMaxWaterSpeed = 4.0f;
+				constexpr float kMaxWaterSpeed = 4.5f;
 				if (speedH < kMaxWaterSpeed)
 				{
-					constexpr float kGlideForce = 0.8f;
+					constexpr float kGlideForce = 1.0f;
 					natives::ApplyForceToEntity(ped, it->second.pushX * kGlideForce, it->second.pushY * kGlideForce, 0.1f);
 				}
 			}
