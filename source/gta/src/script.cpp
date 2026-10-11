@@ -63,7 +63,9 @@ namespace
 	struct WaterPed
 	{
 		float dirX = 0.0f, dirY = 0.0f, dirZ = 0.0f;
+		float pushX = 0.0f, pushY = 0.0f;
 		int lastSeen = 0;
+		bool initialized = false;
 	};
 	std::unordered_map<Ped, WaterPed> g_waterPeds; // peds currently pushed by Minecraft water
 	std::map<Ped, Ped> g_copTarget;    // cop -> the double it was told to fight
@@ -1874,7 +1876,27 @@ namespace
 				continue;
 			if (natives::DoesEntityExist(ped) && !natives::IsPedDeadOrDying(ped))
 			{
-				g_waterPeds[ped] = {float(dx), float(dy), float(dz), now};
+				auto &entry = g_waterPeds[ped];
+				entry.dirX = float(dx);
+				entry.dirY = float(dy);
+				entry.dirZ = float(dz);
+				entry.lastSeen = now;
+
+				const float lenSq = entry.dirX * entry.dirX + entry.dirY * entry.dirY;
+				if (lenSq >= 1e-4f)
+				{
+					const float len = std::sqrt(lenSq);
+					entry.pushX = entry.dirX / len;
+					entry.pushY = entry.dirY / len;
+					entry.initialized = true;
+				}
+				else if (!entry.initialized)
+				{
+					const float h = natives::GetEntityHeading(ped) * 3.14159265f / 180.0f;
+					entry.pushX = -std::sin(h);
+					entry.pushY = std::cos(h);
+					entry.initialized = true;
+				}
 				updated.insert(ped);
 			}
 		}
@@ -1902,39 +1924,23 @@ namespace
 				continue;
 			}
 
+			// If ped is not currently in ragdoll (just entered water or trying to get up), trip and ragdoll forward
 			if (!natives::IsPedRagdoll(ped))
 			{
+				natives::ClearPedTasks(ped);
 				natives::SetPedCanRagdoll(ped, TRUE);
-				natives::SetPedToRagdoll(ped, 3000);
+				natives::SetPedToRagdoll(ped, 2500, 2500, 0, TRUE, TRUE, FALSE);
+				natives::ApplyForceToEntityCenterOfMass(ped, 1, it->second.pushX * 1.8f, it->second.pushY * 1.8f, -0.6f);
 			}
 
-			float dx = it->second.dirX;
-			float dy = it->second.dirY;
-			float dz = it->second.dirZ;
-
-			const float lenSq = dx * dx + dy * dy;
-			if (lenSq < 1e-4f)
-			{
-				const float h = natives::GetEntityHeading(ped) * 3.14159265f / 180.0f;
-				dx = -std::sin(h);
-				dy = std::cos(h);
-				dz = -0.2f;
-			}
-			else
-			{
-				const float len = std::sqrt(lenSq);
-				dx /= len;
-				dy /= len;
-				dz = std::clamp(dz, -1.0f, 0.2f);
-			}
-
+			// Apply continuous water current gliding force to center of mass
 			const Vector3 vel = natives::GetEntityVelocity(ped);
-			const float speed = std::sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z);
-			constexpr float kMaxWaterSpeed = 6.0f;
-			if (speed < kMaxWaterSpeed)
+			const float speedH = std::sqrt(vel.x * vel.x + vel.y * vel.y);
+			constexpr float kMaxWaterSpeed = 3.5f;
+			if (speedH < kMaxWaterSpeed)
 			{
-				constexpr float kForce = 1.8f;
-				natives::ApplyForceToEntity(ped, dx * kForce, dy * kForce, dz * kForce);
+				constexpr float kGlideForce = 0.35f;
+				natives::ApplyForceToEntityCenterOfMass(ped, 1, it->second.pushX * kGlideForce, it->second.pushY * kGlideForce, -0.1f);
 			}
 
 			++it;

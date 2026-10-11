@@ -105,12 +105,20 @@ namespace natives
 	{
 		invoke<Void>(0x867654CBC7606F2C, x1, y1, z1, x2, y2, z2, damage, TRUE, weapon, owner, TRUE, TRUE, -1.0f);
 	}
+	inline void SetPedToRagdoll(Ped p, int time1, int time2, int type, BOOL p4, BOOL p5, BOOL p6)
+	{
+		invoke<Void>(0xAE99FB955581844A, p, time1, time2, type, p4, p5, p6);
+	}
 	inline void SetPedToRagdoll(Ped p, int ms) { invoke<Void>(0xAE99FB955581844A, p, ms, ms, 0, FALSE, FALSE, FALSE); }
 	inline BOOL IsPedRagdoll(Ped p) { return invoke<BOOL>(0x47E4E977581C5B55, p); }
 	inline void ApplyDamageToPed(Ped p, int damage) { invoke<Void>(0x697157CED63F18D4, p, damage, FALSE, 0, 0); }
 	inline void ApplyForceToEntity(Entity e, float x, float y, float z)
 	{
 		invoke<Void>(0xC5F68BE9613E2D18, e, 1, x, y, z, 0.0f, 0.0f, 0.0f, 0, FALSE, TRUE, TRUE, FALSE, TRUE);
+	}
+	inline void ApplyForceToEntityCenterOfMass(Entity e, int forceType, float x, float y, float z)
+	{
+		invoke<Void>(0x18CDA44387803C2C, e, forceType, x, y, z, FALSE, FALSE, FALSE, FALSE);
 	}
 	inline BOOL IsPedDeadOrDying(Ped p) { return invoke<BOOL>(0x3317DEDB88C95038, p, TRUE); }
 	// Mobs vs police (hashes and argument counts checked against alloc8or's nativedb for 3889).

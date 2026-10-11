@@ -1,0 +1,10 @@
+# Build artifacts
+*.html
+*.zip
+temp/
+build/
+bin/
+.gradle/
+source/gta/build/
+source/mc/build/
+source/mc/.gradle/
