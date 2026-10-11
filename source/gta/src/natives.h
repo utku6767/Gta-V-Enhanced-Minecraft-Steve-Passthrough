@@ -106,6 +106,7 @@ namespace natives
 		invoke<Void>(0x867654CBC7606F2C, x1, y1, z1, x2, y2, z2, damage, TRUE, weapon, owner, TRUE, TRUE, -1.0f);
 	}
 	inline void SetPedToRagdoll(Ped p, int ms) { invoke<Void>(0xAE99FB955581844A, p, ms, ms, 0, FALSE, FALSE, FALSE); }
+	inline BOOL IsPedRagdoll(Ped p) { return invoke<BOOL>(0x47E4E977581C5B55, p); }
 	inline void ApplyDamageToPed(Ped p, int damage) { invoke<Void>(0x697157CED63F18D4, p, damage, FALSE, 0, 0); }
 	inline void ApplyForceToEntity(Entity e, float x, float y, float z)
 	{

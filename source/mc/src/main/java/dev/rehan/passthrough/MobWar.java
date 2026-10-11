@@ -18,9 +18,13 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -61,6 +65,7 @@ public final class MobWar {
 	private static final Map<Integer, Integer> handleOf = new HashMap<>();
 	private static final Map<Integer, Integer> missingTicks = new HashMap<>();
 	private static boolean reportedMobs;
+	private static boolean reportedWaterPeds;
 
 	private MobWar() {
 	}
@@ -142,6 +147,7 @@ public final class MobWar {
 		applyDamage(level);
 		if (Passthrough.active) {
 			reportMobs(s, level);
+			reportWaterCurrents(level);
 		}
 	}
 
@@ -271,6 +277,85 @@ public final class MobWar {
 		reportedMobs = n > 0;
 	}
 
+	/** {"t":"waterpeds","p":[[handle,dirX,dirY,dirZ],...]}: GTA peds whose proxies touch water (source or flowing). */
+	private static void reportWaterCurrents(final ServerLevel level) {
+		if (proxies.isEmpty()) {
+			if (reportedWaterPeds) {
+				Passthrough.events.accept("{\"t\":\"waterpeds\",\"p\":[]}");
+				reportedWaterPeds = false;
+			}
+			return;
+		}
+
+		StringBuilder b = new StringBuilder("{\"t\":\"waterpeds\",\"p\":[");
+		int count = 0;
+		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+
+		for (Map.Entry<Integer, Villager> entry : proxies.entrySet()) {
+			Villager v = entry.getValue();
+			if (v == null || v.isRemoved()) {
+				continue;
+			}
+
+			AABB box = v.getBoundingBox();
+			int minX = (int) Math.floor(box.minX);
+			int maxX = (int) Math.floor(box.maxX);
+			int minY = (int) Math.floor(box.minY - 0.15); // detect feet touching water
+			int maxY = (int) Math.floor(box.maxY);
+			int minZ = (int) Math.floor(box.minZ);
+			int maxZ = (int) Math.floor(box.maxZ);
+
+			boolean inWater = false;
+			double flowX = 0.0;
+			double flowY = 0.0;
+			double flowZ = 0.0;
+
+			for (int x = minX; x <= maxX; x++) {
+				for (int y = minY; y <= maxY; y++) {
+					for (int z = minZ; z <= maxZ; z++) {
+						p.set(x, y, z);
+						FluidState fluid = level.getFluidState(p);
+						if (fluid.is(FluidTags.WATER)) {
+							inWater = true;
+							Vec3 f = fluid.getFlow(level, p);
+							flowX += f.x;
+							flowY += f.y;
+							flowZ += f.z;
+						}
+					}
+				}
+			}
+
+			if (inWater) {
+				double lenSq = flowX * flowX + flowY * flowY + flowZ * flowZ;
+				double gx, gy, gz;
+				if (lenSq > 1e-4) {
+					double len = Math.sqrt(lenSq);
+					double nx = flowX / len;
+					double ny = flowY / len;
+					double nz = flowZ / len;
+					// Minecraft (x, y, z) -> GTA (x, -z, y)
+					gx = nx;
+					gy = -nz;
+					gz = ny;
+				} else {
+					// Standing / source water: default downward settle, ASI pushes forward
+					gx = 0.0;
+					gy = 0.0;
+					gz = -0.15;
+				}
+
+				b.append(count++ == 0 ? "" : ",").append(String.format(Locale.ROOT, "[%d,%.3f,%.3f,%.3f]",
+					entry.getKey(), gx, gy, gz));
+			}
+		}
+
+		if (count > 0 || reportedWaterPeds) {
+			Passthrough.events.accept(b.append("]}").toString());
+			reportedWaterPeds = count > 0;
+		}
+	}
+
 	/**
 	 * Spawn `count` mobs of `kind` (e.g. "zombie") on the ground `minR`..`maxR` blocks from the player, within `arc`
 	 * degrees either side of where the player faces (or of `yawOffset` from it); or, given `at` ({x, y, z}: a fixed
@@ -357,6 +442,7 @@ public final class MobWar {
 		proxies.clear();
 		handleOf.clear();
 		missingTicks.clear();
+		reportedWaterPeds = false;
 	}
 
 	static void detach(final MinecraftServer s) {
@@ -368,6 +454,7 @@ public final class MobWar {
 		peds.set(null);
 		damage.clear();
 		reportedMobs = false;
+		reportedWaterPeds = false;
 	}
 
 	private static MinecraftServer serverOrNull() {

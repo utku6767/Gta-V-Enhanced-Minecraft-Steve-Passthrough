@@ -60,6 +60,12 @@ namespace
 	std::map<int, MobDouble> g_mobs; // by Minecraft entity id
 	std::unordered_set<Ped> g_doublePeds;
 	std::unordered_set<Ped> g_pedsSent; // the last "peds" list (a mobhit must name one of these)
+	struct WaterPed
+	{
+		float dirX = 0.0f, dirY = 0.0f, dirZ = 0.0f;
+		int lastSeen = 0;
+	};
+	std::unordered_map<Ped, WaterPed> g_waterPeds; // peds currently pushed by Minecraft water
 	std::map<Ped, Ped> g_copTarget;    // cop -> the double it was told to fight
 	std::vector<Ped> g_squad;          // spawned cops ("cops" op) and their cars
 	std::vector<Vehicle> g_squadCars;
@@ -923,6 +929,7 @@ namespace
 		g_mobs.clear();
 		g_doublePeds.clear();
 		g_pedsSent.clear();
+		g_waterPeds.clear();
 		squad_clear();
 	}
 
@@ -1850,10 +1857,99 @@ namespace
 		parse("set", [&](auto key) { g_props.pending.push_back(key); });
 	}
 
+	void water_peds_message(const std::string &message)
+	{
+		const int now = natives::GetGameTimer();
+		std::unordered_set<Ped> updated;
+		const char *at = json_value(message, "p");
+		const Ped player = natives::PlayerPedId();
+		while (at && (at = std::strchr(at + 1, '[')) != nullptr)
+		{
+			int handle = 0;
+			double dx = 0, dy = 0, dz = 0;
+			if (sscanf_s(at, "[%d,%lf,%lf,%lf]", &handle, &dx, &dy, &dz) != 4)
+				continue;
+			const Ped ped = (Ped)handle;
+			if (ped == player || g_doublePeds.count(ped))
+				continue;
+			if (natives::DoesEntityExist(ped) && !natives::IsPedDeadOrDying(ped))
+			{
+				g_waterPeds[ped] = {float(dx), float(dy), float(dz), now};
+				updated.insert(ped);
+			}
+		}
+		for (auto it = g_waterPeds.begin(); it != g_waterPeds.end();)
+		{
+			if (!updated.count(it->first))
+				it = g_waterPeds.erase(it);
+			else
+				++it;
+		}
+	}
+
+	void water_peds_tick()
+	{
+		if (g_waterPeds.empty())
+			return;
+		const int now = natives::GetGameTimer();
+		const Ped player = natives::PlayerPedId();
+		for (auto it = g_waterPeds.begin(); it != g_waterPeds.end();)
+		{
+			const Ped ped = it->first;
+			if (!natives::DoesEntityExist(ped) || natives::IsPedDeadOrDying(ped) || ped == player || now - it->second.lastSeen > 250)
+			{
+				it = g_waterPeds.erase(it);
+				continue;
+			}
+
+			if (!natives::IsPedRagdoll(ped))
+			{
+				natives::SetPedCanRagdoll(ped, TRUE);
+				natives::SetPedToRagdoll(ped, 3000);
+			}
+
+			float dx = it->second.dirX;
+			float dy = it->second.dirY;
+			float dz = it->second.dirZ;
+
+			const float lenSq = dx * dx + dy * dy;
+			if (lenSq < 1e-4f)
+			{
+				const float h = natives::GetEntityHeading(ped) * 3.14159265f / 180.0f;
+				dx = -std::sin(h);
+				dy = std::cos(h);
+				dz = -0.2f;
+			}
+			else
+			{
+				const float len = std::sqrt(lenSq);
+				dx /= len;
+				dy /= len;
+				dz = std::clamp(dz, -1.0f, 0.2f);
+			}
+
+			const Vector3 vel = natives::GetEntityVelocity(ped);
+			const float speed = std::sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z);
+			constexpr float kMaxWaterSpeed = 6.0f;
+			if (speed < kMaxWaterSpeed)
+			{
+				constexpr float kForce = 1.8f;
+				natives::ApplyForceToEntity(ped, dx * kForce, dy * kForce, dz * kForce);
+			}
+
+			++it;
+		}
+	}
+
 	/// Messages from Minecraft: explosions become GTA explosions at the same spot; director commands.
 	void handle_event(const std::string &message)
 	{
 		const std::string type = json_str(message, "t");
+		if (type == "waterpeds")
+		{
+			water_peds_message(message);
+			return;
+		}
 		if (type == "gta")
 		{
 			handle_director(message);
@@ -2302,6 +2398,7 @@ namespace
 
 		screen_fx_tick();
 		mobs_tick(ped);
+		water_peds_tick();
 		hell_tick(ped);
 		hot_tick(ped);
 		hell_lights(ped);
