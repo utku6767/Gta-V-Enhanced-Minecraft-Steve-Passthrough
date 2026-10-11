@@ -14,9 +14,10 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 - **Elytra flight.** Minecraft physics fly Steve, and GTA follows with a chase camera.
 - **Mobs vs police.** Hostile mobs hunt GTA's people, the police shoot back, and damage crosses over both ways.
 - **Native Survival & Shields.** Steve is spawned in Creative but can toggle Survival mode. GTA V bullet damage bridges to Minecraft. Blocking with a shield neutralizes police bullets; otherwise, Steve takes raw damage.
-- **Aim snapping.** Snaps where the minecraft character is looking player crosshair in GTA V accurately when aiming with a bow or crossbow.
+- **Aim snapping.** Snaps the GTA V player crosshair to where the Minecraft character is looking when aiming with a bow or crossbow.
 - **Elytra auto-launch.** Enabling elytra flight now instantly teleports you 10 blocks high for immediate takeoff.
 - **Skin swapping.** Press NumLock to hot-swap your skin. Place `custom_skin.png` and `default_skin.png` in a `passthrough` folder alongside your Minecraft `mods` folder (i.e., `../passthrough/`).
+- **Water currents carry peds.** GTA peds touching Minecraft water (source blocks and flowing streams) are carried along in the flow direction, tripping forward into ragdoll until they leave the water. Steve's own water movement is untouched.
 - **The Nether.** Walk through a lit portal and the ground around it turns into the Nether.
 
 ## Possible Bugs
@@ -25,7 +26,7 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 2. Elytra in survival: boost with the first (non-explosive) rocket in your inventory. The last rocket is explosive and is meant for the crossbow, not for flight, and it damages you when used for flight.
 3. The ender pearls might fall through the ground and not work when thrown far away because the collision data from GTA V was not given to Minecraft at that time.
 4. Not really a bug, but if you put TNT near a vehicle it will despawn that vehicle.
-5. TNT's might fall through the ground.
+5. TNTs might fall through the ground.
 6. Sometimes there will be graphical glitches like Steve leaving a ghost trail behind or blocks might look a little weird because of the ReShade.
 
 ## Custom Skins
