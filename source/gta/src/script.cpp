@@ -211,6 +211,8 @@ namespace
 	std::atomic<bool> g_wanted_toggle{false};
 	std::atomic<bool> g_tp_snap_toggle{false};
 	bool g_tp_snap_enabled = false;
+	std::atomic<bool> g_pause_toggle{false};
+	bool g_pause_mode = false;
 
 	// Controls GTA must not act on while Minecraft owns the mouse: attacking/aiming, melee, weapon selection.
 	const int kDisabledControls[] = {
@@ -2226,6 +2228,11 @@ namespace
 			sendf("{\"t\":\"tpsnap\"}");
 			natives::Notify(g_tp_snap_enabled ? "Third-person aim snap ~g~ON" : "Third-person aim snap ~r~OFF");
 		}
+		if (g_pause_toggle.exchange(false))
+		{
+			g_pause_mode = !g_pause_mode;
+			natives::Notify(g_pause_mode ? "Pause mode ~g~ON~s~ (F: Swap Offhand)" : "Pause mode ~r~OFF~s~ (GTA controls)");
+		}
 		const bool on = g_enabled && g_ws.connected();
 		const bool hidden = natives::IsPauseMenuActive() || natives::IsScreenFadedOut() || natives::IsCutsceneActive() || natives::IsPlayerSwitchInProgress();
 		compositor::set_active(on && !hidden);
@@ -2402,6 +2409,14 @@ namespace
 			if (natives::IsDisabledControlJustPressed(0, kHotbarControls[i]))
 				sendf("{\"t\":\"slot\",\"n\":%d}", i);
 
+		if (g_pause_mode)
+		{
+			// Block vehicle entering/exiting (Control 23 / INPUT_ENTER) to prevent collision with 'F' key
+			// and forward 'F' to Minecraft offhand swap
+			natives::DisableControlAction(0, 23, TRUE);
+			forward_button(23, "swap");
+		}
+
 		screen_fx_tick();
 		mobs_tick(ped);
 		water_peds_tick();
@@ -2470,6 +2485,8 @@ namespace
 			g_arm_flight = true;
 		else if (key == VK_NUMLOCK)
 			g_skin_toggle = true;
+		else if (key == VK_PAUSE)
+			g_pause_toggle = true;
 	}
 }
 

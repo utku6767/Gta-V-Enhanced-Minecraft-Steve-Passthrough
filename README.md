@@ -18,6 +18,7 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 - **Elytra auto-launch.** Enabling elytra flight now instantly teleports you 10 blocks high for immediate takeoff.
 - **Skin swapping.** Press NumLock to hot-swap your skin. Place `custom_skin.png` and `default_skin.png` in a `passthrough` folder alongside your Minecraft `mods` folder (i.e., `../passthrough/`).
 - **Water currents carry peds.** GTA peds touching Minecraft water (source blocks and flowing streams) are carried along in the flow direction, tripping forward into ragdoll until they leave the water. Steve's own water movement is untouched.
+- **Offhand swap with Pause mode.** Pressing **Pause / Break** toggles Pause mode on. While active, GTA's vehicle enter/exit action on **F** is blocked, allowing you to press **F** to swap items between your main hand and offhand in Minecraft.
 - **The Nether.** Walk through a lit portal and the ground around it turns into the Nether.
 
 ## Possible Bugs
@@ -97,6 +98,8 @@ The two games can start in either order. The plugin keeps trying to connect.
 | **Page Down** | Toggle aim snapping |
 | **Page Up** | Toggle native GTA V wanted accumulation vs forced 0-star safe mode |
 | **NumLock** | Toggle custom skin override |
+| **Pause / Break** | Toggle Pause mode (redirects **F** from GTA vehicle enter/exit to Minecraft offhand swap) |
+| **F** (in Pause mode) | Swap item with offhand in Minecraft |
 | Left mouse | Minecraft attack: break blocks, swing the sword |
 | Right mouse | Minecraft use: place blocks, light TNT, shoot, throw pearls |
 | Mouse wheel, **1-9** | Minecraft hotbar |
