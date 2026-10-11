@@ -1874,7 +1874,7 @@ namespace
 			if (sscanf_s(at, "[%d,%lf,%lf,%lf]", &handle, &dx, &dy, &dz) != 4)
 				continue;
 			const Ped ped = (Ped)handle;
-			if (ped == player || g_doublePeds.count(ped))
+			if (ped == player || natives::IsPedAPlayer(ped) || g_doublePeds.count(ped))
 				continue;
 			if (natives::DoesEntityExist(ped) && !natives::IsPedDeadOrDying(ped))
 			{
@@ -1920,29 +1920,29 @@ namespace
 		for (auto it = g_waterPeds.begin(); it != g_waterPeds.end();)
 		{
 			const Ped ped = it->first;
-			if (!natives::DoesEntityExist(ped) || natives::IsPedDeadOrDying(ped) || ped == player || now - it->second.lastSeen > 250)
+			if (!natives::DoesEntityExist(ped) || natives::IsPedDeadOrDying(ped) || ped == player || natives::IsPedAPlayer(ped) || now - it->second.lastSeen > 250)
 			{
 				it = g_waterPeds.erase(it);
 				continue;
 			}
 
-			// If ped is not currently in ragdoll (just entered water or trying to get up), trip and ragdoll forward
+			// Follow sword code mechanics: SetPedToRagdoll(ped, 4000) and ApplyForceToEntity
 			if (!natives::IsPedRagdoll(ped))
 			{
-				natives::ClearPedTasks(ped);
-				natives::SetPedCanRagdoll(ped, TRUE);
-				natives::SetPedToRagdoll(ped, 2500, 2500, 0, TRUE, TRUE, FALSE);
-				natives::ApplyForceToEntityCenterOfMass(ped, 1, it->second.pushX * 1.8f, it->second.pushY * 1.8f, -0.6f);
+				natives::SetPedToRagdoll(ped, 4000);
+				natives::ApplyForceToEntity(ped, it->second.pushX * 6.0f, it->second.pushY * 6.0f, 1.2f);
 			}
-
-			// Apply continuous water current gliding force to center of mass
-			const Vector3 vel = natives::GetEntityVelocity(ped);
-			const float speedH = std::sqrt(vel.x * vel.x + vel.y * vel.y);
-			constexpr float kMaxWaterSpeed = 3.5f;
-			if (speedH < kMaxWaterSpeed)
+			else
 			{
-				constexpr float kGlideForce = 0.35f;
-				natives::ApplyForceToEntityCenterOfMass(ped, 1, it->second.pushX * kGlideForce, it->second.pushY * kGlideForce, -0.1f);
+				// Continuously carry the ragdolled ped forward along the water current
+				const Vector3 vel = natives::GetEntityVelocity(ped);
+				const float speedH = std::sqrt(vel.x * vel.x + vel.y * vel.y);
+				constexpr float kMaxWaterSpeed = 4.0f;
+				if (speedH < kMaxWaterSpeed)
+				{
+					constexpr float kGlideForce = 0.8f;
+					natives::ApplyForceToEntity(ped, it->second.pushX * kGlideForce, it->second.pushY * kGlideForce, 0.1f);
+				}
 			}
 
 			++it;
