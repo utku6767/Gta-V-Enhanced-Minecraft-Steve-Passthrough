@@ -103,16 +103,16 @@ public final class ClientInput {
 				if (minecraft.gui.screen() != null && m.has("k")) {
 					String k = m.get("k").getAsString();
 					switch (k) {
-						case "enter" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(257, 0, 0));
+						case "enter" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(40, 13, 0));
 						case "escape" -> {
 							minecraft.gui.screen().onClose();
 							minecraft.gui.setScreen(null);
 						}
-						case "backspace" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(259, 0, 0));
-						case "left" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(263, 0, 0));
-						case "right" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(262, 0, 0));
-						case "up" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(265, 0, 0));
-						case "down" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(264, 0, 0));
+						case "backspace" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(42, 8, 0));
+						case "left" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(80, 1073741904, 0));
+						case "right" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(79, 1073741903, 0));
+						case "up" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(82, 1073741899, 0));
+						case "down" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(81, 1073741900, 0));
 						default -> {
 						}
 					}
