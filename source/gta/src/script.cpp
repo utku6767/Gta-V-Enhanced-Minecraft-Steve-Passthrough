@@ -2433,6 +2433,7 @@ namespace
 			// to prevent opening pause menus, entering vehicles, or confirming frontend menus
 			natives::DisableControlAction(0, 18, TRUE);  // INPUT_ENTER
 			natives::DisableControlAction(0, 23, TRUE);  // INPUT_ENTER (car/interaction)
+			natives::DisableControlAction(0, 37, TRUE);  // INPUT_SELECT_WEAPON (Tab)
 			natives::DisableControlAction(0, 199, TRUE); // INPUT_FRONTEND_PAUSE (ESC)
 			natives::DisableControlAction(0, 200, TRUE); // INPUT_FRONTEND_PAUSE_ALTERNATE
 			natives::DisableControlAction(0, 201, TRUE); // INPUT_FRONTEND_ACCEPT (Enter)
@@ -2640,6 +2641,11 @@ namespace
 				if (key == VK_BACK)
 				{
 					g_ws.send("{\"t\":\"chat_key\",\"k\":\"backspace\"}");
+					return;
+				}
+				if (key == VK_TAB)
+				{
+					g_ws.send("{\"t\":\"chat_key\",\"k\":\"tab\"}");
 					return;
 				}
 				if (key == VK_LEFT)

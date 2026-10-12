@@ -109,6 +109,7 @@ public final class ClientInput {
 							minecraft.gui.setScreen(null);
 						}
 						case "backspace" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(42, 8, 0));
+						case "tab" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(43, 9, 0));
 						case "left" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(80, 1073741904, 0));
 						case "right" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(79, 1073741903, 0));
 						case "up" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(82, 1073741899, 0));
