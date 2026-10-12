@@ -2423,7 +2423,7 @@ namespace
 		if (g_chat_exit_notify.exchange(false))
 			natives::Notify("Minecraft Chat ~r~CLOSED");
 		if (g_inv_notify.exchange(false))
-			natives::Notify("Minecraft Inventory ~g~OPEN~s~ (Arrows: Move, Enter: Click, E/ESC: Exit)");
+			natives::Notify("Minecraft Inventory ~g~OPEN~s~ (Arrows: Move, Enter: Click, ESC: Exit)");
 		if (g_inv_exit_notify.exchange(false))
 			natives::Notify("Minecraft Inventory ~r~CLOSED");
 
@@ -2563,7 +2563,8 @@ namespace
 				if (isUpNow)
 					return;
 
-				if (key == VK_ESCAPE || key == 'E' || key == 0x45 || key == 'I' || key == 0x49)
+				// Only ESC closes inventory (typing words with 'e' like redstone works cleanly)
+				if (key == VK_ESCAPE)
 				{
 					g_inv_mode = false;
 					g_inv_exit_notify = true;
@@ -2574,6 +2575,11 @@ namespace
 				{
 					g_cursor_click_flash = 6;
 					sendf("{\"t\":\"inv_click\",\"x\":%.4f,\"y\":%.4f,\"btn\":0}", g_cursor_x, g_cursor_y);
+					return;
+				}
+				if (key == VK_BACK)
+				{
+					g_ws.send("{\"t\":\"chat_key\",\"k\":\"backspace\"}");
 					return;
 				}
 				if (!wasDownBefore)
@@ -2602,6 +2608,23 @@ namespace
 						g_cursor_y = std::clamp(g_cursor_y + step, 0.02f, 0.98f);
 						sendf("{\"t\":\"inv_move\",\"x\":%.4f,\"y\":%.4f}", g_cursor_x, g_cursor_y);
 						return;
+					}
+				}
+
+				BYTE kState[256];
+				if (GetKeyboardState(kState))
+				{
+					WCHAR chars[4] = {};
+					int count = ToUnicode(key, scanCode, kState, chars, 4, 0);
+					for (int i = 0; i < count; ++i)
+					{
+						WCHAR ch = chars[i];
+						if (ch >= 32 && ch != 127)
+						{
+							char buf[64];
+							snprintf(buf, sizeof(buf), "{\"t\":\"chat_char\",\"c\":%u}", (unsigned int)ch);
+							g_ws.send(buf);
+						}
 					}
 				}
 				return;
