@@ -216,6 +216,12 @@ namespace
 	std::atomic<bool> g_chat_mode{false};
 	std::atomic<bool> g_chat_notify{false};
 	std::atomic<bool> g_chat_exit_notify{false};
+	std::atomic<bool> g_inv_mode{false};
+	std::atomic<bool> g_inv_notify{false};
+	std::atomic<bool> g_inv_exit_notify{false};
+	float g_cursor_x = 0.5f;
+	float g_cursor_y = 0.5f;
+	int g_cursor_click_flash = 0;
 
 	// Controls GTA must not act on while Minecraft owns the mouse: attacking/aiming, melee, weapon selection.
 	const int kDisabledControls[] = {
@@ -2234,7 +2240,7 @@ namespace
 		if (g_pause_toggle.exchange(false))
 		{
 			g_pause_mode = !g_pause_mode;
-			natives::Notify(g_pause_mode ? "Pause mode ~g~ON~s~ (F: Swap Offhand)" : "Pause mode ~r~OFF~s~ (GTA controls)");
+			natives::Notify(g_pause_mode ? "Pause mode ~g~ON~s~ (E: Inventory, T: Chat, F: Swap)" : "Pause mode ~r~OFF~s~ (GTA controls)");
 		}
 		const bool on = g_enabled && g_ws.connected();
 		const bool hidden = natives::IsPauseMenuActive() || natives::IsScreenFadedOut() || natives::IsCutsceneActive() || natives::IsPlayerSwitchInProgress();
@@ -2397,7 +2403,7 @@ namespace
 				natives::SetEntityVisible(w, TRUE, FALSE);
 			reticle_tick(ped);
 		}
-		else if (!g_chat_mode)
+		else if (!g_chat_mode && !g_inv_mode)
 		{
 			forward_button(24, "attack");
 			forward_button(25, "use");
@@ -2416,6 +2422,10 @@ namespace
 			natives::Notify("Minecraft Chat ~g~OPEN~s~ (Type, Enter/ESC to exit)");
 		if (g_chat_exit_notify.exchange(false))
 			natives::Notify("Minecraft Chat ~r~CLOSED");
+		if (g_inv_notify.exchange(false))
+			natives::Notify("Minecraft Inventory ~g~OPEN~s~ (Arrows: Move, Enter: Click, E/ESC: Exit)");
+		if (g_inv_exit_notify.exchange(false))
+			natives::Notify("Minecraft Inventory ~r~CLOSED");
 
 		if (g_pause_mode)
 		{
@@ -2429,17 +2439,69 @@ namespace
 			natives::DisableControlAction(0, 202, TRUE); // INPUT_FRONTEND_CANCEL (Esc/Backspace)
 			natives::DisableControlAction(0, 322, TRUE); // INPUT_FRONTEND_PAUSE (ESC alternate)
 
-			if (!g_chat_mode)
+			if (g_inv_mode)
 			{
-				// Forward 'F' to Minecraft offhand swap
-				forward_button(23, "swap");
+				// In inventory mode, disable all GTA controls completely
+				natives::DisableAllControlActions(0);
+				natives::DisableAllControlActions(1);
+				natives::DisableAllControlActions(2);
+
+				// Smooth directional movement while holding arrow keys
+				const float speed = 0.0075f;
+				bool moved = false;
+				if (GetAsyncKeyState(VK_LEFT) & 0x8000)
+				{
+					g_cursor_x -= speed;
+					moved = true;
+				}
+				if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
+				{
+					g_cursor_x += speed;
+					moved = true;
+				}
+				if (GetAsyncKeyState(VK_UP) & 0x8000)
+				{
+					g_cursor_y -= speed;
+					moved = true;
+				}
+				if (GetAsyncKeyState(VK_DOWN) & 0x8000)
+				{
+					g_cursor_y += speed;
+					moved = true;
+				}
+				g_cursor_x = std::clamp(g_cursor_x, 0.02f, 0.98f);
+				g_cursor_y = std::clamp(g_cursor_y, 0.02f, 0.98f);
+				if (moved)
+				{
+					sendf("{\"t\":\"inv_move\",\"x\":%.4f,\"y\":%.4f}", g_cursor_x, g_cursor_y);
+				}
+
+				// Draw high-visibility virtual cursor on GTA screen
+				// Outer black shadows
+				natives::DrawRect(g_cursor_x, g_cursor_y, 0.024f, 0.006f, 0, 0, 0, 220);
+				natives::DrawRect(g_cursor_x, g_cursor_y, 0.005f, 0.034f, 0, 0, 0, 220);
+				// Crosshair lines (white, turns lime green briefly on click)
+				int cr = (g_cursor_click_flash > 0) ? 60 : 255;
+				int cg = (g_cursor_click_flash > 0) ? 255 : 255;
+				int cb = (g_cursor_click_flash > 0) ? 60 : 255;
+				if (g_cursor_click_flash > 0)
+					--g_cursor_click_flash;
+				natives::DrawRect(g_cursor_x, g_cursor_y, 0.020f, 0.003f, cr, cg, cb, 255);
+				natives::DrawRect(g_cursor_x, g_cursor_y, 0.0025f, 0.028f, cr, cg, cb, 255);
+				// Center red dot
+				natives::DrawRect(g_cursor_x, g_cursor_y, 0.006f, 0.008f, 255, 40, 40, 255);
 			}
-			else
+			else if (g_chat_mode)
 			{
 				// In chat mode, disable all GTA controls completely so keyboard/mouse routing stays with Minecraft
 				natives::DisableAllControlActions(0);
 				natives::DisableAllControlActions(1);
 				natives::DisableAllControlActions(2);
+			}
+			else
+			{
+				// Forward 'F' to Minecraft offhand swap
+				forward_button(23, "swap");
 			}
 		}
 
@@ -2495,8 +2557,57 @@ namespace
 	{
 		if (g_pause_mode)
 		{
+			// If in inventory mode with virtual cursor
+			if (g_inv_mode)
+			{
+				if (isUpNow)
+					return;
+
+				if (key == VK_ESCAPE || key == 'E' || key == 0x45 || key == 'I' || key == 0x49)
+				{
+					g_inv_mode = false;
+					g_inv_exit_notify = true;
+					g_ws.send("{\"t\":\"inv_close\"}");
+					return;
+				}
+				if (key == VK_RETURN)
+				{
+					g_cursor_click_flash = 6;
+					sendf("{\"t\":\"inv_click\",\"x\":%.4f,\"y\":%.4f,\"btn\":0}", g_cursor_x, g_cursor_y);
+					return;
+				}
+				if (!wasDownBefore)
+				{
+					const float step = 0.016f;
+					if (key == VK_LEFT)
+					{
+						g_cursor_x = std::clamp(g_cursor_x - step, 0.02f, 0.98f);
+						sendf("{\"t\":\"inv_move\",\"x\":%.4f,\"y\":%.4f}", g_cursor_x, g_cursor_y);
+						return;
+					}
+					if (key == VK_RIGHT)
+					{
+						g_cursor_x = std::clamp(g_cursor_x + step, 0.02f, 0.98f);
+						sendf("{\"t\":\"inv_move\",\"x\":%.4f,\"y\":%.4f}", g_cursor_x, g_cursor_y);
+						return;
+					}
+					if (key == VK_UP)
+					{
+						g_cursor_y = std::clamp(g_cursor_y - step, 0.02f, 0.98f);
+						sendf("{\"t\":\"inv_move\",\"x\":%.4f,\"y\":%.4f}", g_cursor_y, g_cursor_y);
+						return;
+					}
+					if (key == VK_DOWN)
+					{
+						g_cursor_y = std::clamp(g_cursor_y + step, 0.02f, 0.98f);
+						sendf("{\"t\":\"inv_move\",\"x\":%.4f,\"y\":%.4f}", g_cursor_x, g_cursor_y);
+						return;
+					}
+				}
+				return;
+			}
 			// If already in chat mode, route keyboard to Minecraft until Enter or ESC
-			if (g_chat_mode)
+			else if (g_chat_mode)
 			{
 				if (isUpNow)
 					return;
@@ -2569,6 +2680,17 @@ namespace
 					g_ws.send("{\"t\":\"chat_open\"}");
 					return;
 				}
+				// Pressing 'E' opens Minecraft inventory with virtual cursor
+				if (!isUpNow && !wasDownBefore && (key == 'E' || key == 0x45 || key == 'I' || key == 0x49))
+				{
+					g_inv_mode = true;
+					g_inv_notify = true;
+					g_cursor_x = 0.5f;
+					g_cursor_y = 0.5f;
+					g_ws.send("{\"t\":\"inv_open\"}");
+					sendf("{\"t\":\"inv_move\",\"x\":%.4f,\"y\":%.4f}", g_cursor_x, g_cursor_y);
+					return;
+				}
 			}
 		}
 
@@ -2597,6 +2719,11 @@ namespace
 			{
 				g_chat_mode = false;
 				g_ws.send("{\"t\":\"chat_key\",\"k\":\"escape\"}");
+			}
+			if (g_inv_mode)
+			{
+				g_inv_mode = false;
+				g_ws.send("{\"t\":\"inv_close\"}");
 			}
 		}
 	}

@@ -113,6 +113,51 @@ final class ClientInput {
 					}
 				}
 			}
+			case "inv_open" -> {
+				if (minecraft.player != null) {
+					minecraft.gui.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(minecraft.player));
+				}
+			}
+			case "inv_close" -> {
+				if (minecraft.gui.screen() != null) {
+					minecraft.gui.screen().onClose();
+					minecraft.gui.setScreen(null);
+				}
+			}
+			case "inv_move" -> {
+				if (m.has("x") && m.has("y")) {
+					double normX = m.get("x").getAsDouble();
+					double normY = m.get("y").getAsDouble();
+					double screenW = minecraft.getWindow().getScreenWidth();
+					double screenH = minecraft.getWindow().getScreenHeight();
+					((dev.rehan.passthrough.client.mixin.MouseHandlerAccessor) minecraft.mouseHandler).passthrough$setXpos(normX * screenW);
+					((dev.rehan.passthrough.client.mixin.MouseHandlerAccessor) minecraft.mouseHandler).passthrough$setYpos(normY * screenH);
+					if (minecraft.gui.screen() != null) {
+						double guiX = normX * minecraft.getWindow().getGuiScaledWidth();
+						double guiY = normY * minecraft.getWindow().getGuiScaledHeight();
+						minecraft.gui.screen().mouseMoved(guiX, guiY);
+					}
+				}
+			}
+			case "inv_click" -> {
+				if (m.has("x") && m.has("y")) {
+					double normX = m.get("x").getAsDouble();
+					double normY = m.get("y").getAsDouble();
+					int btn = m.has("btn") ? m.get("btn").getAsInt() : 0;
+					double screenW = minecraft.getWindow().getScreenWidth();
+					double screenH = minecraft.getWindow().getScreenHeight();
+					double guiX = normX * minecraft.getWindow().getGuiScaledWidth();
+					double guiY = normY * minecraft.getWindow().getGuiScaledHeight();
+					((dev.rehan.passthrough.client.mixin.MouseHandlerAccessor) minecraft.mouseHandler).passthrough$setXpos(normX * screenW);
+					((dev.rehan.passthrough.client.mixin.MouseHandlerAccessor) minecraft.mouseHandler).passthrough$setYpos(normY * screenH);
+					if (minecraft.gui.screen() != null) {
+						net.minecraft.client.input.MouseButtonInfo info = new net.minecraft.client.input.MouseButtonInfo(btn, 0);
+						net.minecraft.client.input.MouseButtonEvent event = new net.minecraft.client.input.MouseButtonEvent(guiX, guiY, info);
+						minecraft.gui.screen().mouseClicked(event, false);
+						minecraft.gui.screen().mouseReleased(event);
+					}
+				}
+			}
 			default -> {
 			}
 		}
