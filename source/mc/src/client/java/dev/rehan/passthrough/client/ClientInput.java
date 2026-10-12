@@ -85,6 +85,34 @@ final class ClientInput {
 					minecraft.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("Third-person controls: " + (PlayerSync.aimSnapEnabled ? "ON" : "OFF")));
 				}
 			}
+			case "chat_open" -> {
+				minecraft.gui.setScreen(new net.minecraft.client.gui.screens.ChatScreen("", false));
+			}
+			case "chat_char" -> {
+				if (minecraft.gui.screen() != null && m.has("c")) {
+					int codepoint = m.get("c").getAsInt();
+					minecraft.gui.screen().charTyped(new net.minecraft.client.input.CharacterEvent(codepoint));
+				}
+			}
+			case "chat_key" -> {
+				if (minecraft.gui.screen() != null && m.has("k")) {
+					String k = m.get("k").getAsString();
+					switch (k) {
+						case "enter" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(257, 0, 0));
+						case "escape" -> {
+							minecraft.gui.screen().onClose();
+							minecraft.gui.setScreen(null);
+						}
+						case "backspace" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(259, 0, 0));
+						case "left" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(263, 0, 0));
+						case "right" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(262, 0, 0));
+						case "up" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(265, 0, 0));
+						case "down" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(264, 0, 0));
+						default -> {
+						}
+					}
+				}
+			}
 			default -> {
 			}
 		}

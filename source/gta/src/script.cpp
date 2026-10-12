@@ -213,6 +213,9 @@ namespace
 	bool g_tp_snap_enabled = false;
 	std::atomic<bool> g_pause_toggle{false};
 	bool g_pause_mode = false;
+	std::atomic<bool> g_chat_mode{false};
+	std::atomic<bool> g_chat_notify{false};
+	std::atomic<bool> g_chat_exit_notify{false};
 
 	// Controls GTA must not act on while Minecraft owns the mouse: attacking/aiming, melee, weapon selection.
 	const int kDisabledControls[] = {
@@ -2394,7 +2397,7 @@ namespace
 				natives::SetEntityVisible(w, TRUE, FALSE);
 			reticle_tick(ped);
 		}
-		else
+		else if (!g_chat_mode)
 		{
 			forward_button(24, "attack");
 			forward_button(25, "use");
@@ -2409,12 +2412,35 @@ namespace
 			if (natives::IsDisabledControlJustPressed(0, kHotbarControls[i]))
 				sendf("{\"t\":\"slot\",\"n\":%d}", i);
 
+		if (g_chat_notify.exchange(false))
+			natives::Notify("Minecraft Chat ~g~OPEN~s~ (Type, Enter/ESC to exit)");
+		if (g_chat_exit_notify.exchange(false))
+			natives::Notify("Minecraft Chat ~r~CLOSED");
+
 		if (g_pause_mode)
 		{
-			// Block vehicle entering/exiting (Control 23 / INPUT_ENTER) to prevent collision with 'F' key
-			// and forward 'F' to Minecraft offhand swap
-			natives::DisableControlAction(0, 23, TRUE);
-			forward_button(23, "swap");
+			// In pause break mode, disable ESC (INPUT_FRONTEND_PAUSE) and ENTER routing to GTA
+			// to prevent opening pause menus, entering vehicles, or confirming frontend menus
+			natives::DisableControlAction(0, 18, TRUE);  // INPUT_ENTER
+			natives::DisableControlAction(0, 23, TRUE);  // INPUT_ENTER (car/interaction)
+			natives::DisableControlAction(0, 199, TRUE); // INPUT_FRONTEND_PAUSE (ESC)
+			natives::DisableControlAction(0, 200, TRUE); // INPUT_FRONTEND_PAUSE_ALTERNATE
+			natives::DisableControlAction(0, 201, TRUE); // INPUT_FRONTEND_ACCEPT (Enter)
+			natives::DisableControlAction(0, 202, TRUE); // INPUT_FRONTEND_CANCEL (Esc/Backspace)
+			natives::DisableControlAction(0, 322, TRUE); // INPUT_FRONTEND_PAUSE (ESC alternate)
+
+			if (!g_chat_mode)
+			{
+				// Forward 'F' to Minecraft offhand swap
+				forward_button(23, "swap");
+			}
+			else
+			{
+				// In chat mode, disable all GTA controls completely so keyboard/mouse routing stays with Minecraft
+				natives::DisableAllControlActions(0);
+				natives::DisableAllControlActions(1);
+				natives::DisableAllControlActions(2);
+			}
 		}
 
 		screen_fx_tick();
@@ -2465,8 +2491,87 @@ namespace
 		}
 	}
 
-	void on_keyboard(DWORD key, WORD, BYTE, BOOL, BOOL, BOOL wasDownBefore, BOOL isUpNow)
+	void on_keyboard(DWORD key, WORD, BYTE scanCode, BOOL, BOOL, BOOL wasDownBefore, BOOL isUpNow)
 	{
+		if (g_pause_mode)
+		{
+			// If already in chat mode, route keyboard to Minecraft until Enter or ESC
+			if (g_chat_mode)
+			{
+				if (isUpNow)
+					return;
+
+				if (key == VK_ESCAPE)
+				{
+					g_chat_mode = false;
+					g_chat_exit_notify = true;
+					g_ws.send("{\"t\":\"chat_key\",\"k\":\"escape\"}");
+					return;
+				}
+				if (key == VK_RETURN)
+				{
+					g_chat_mode = false;
+					g_chat_exit_notify = true;
+					g_ws.send("{\"t\":\"chat_key\",\"k\":\"enter\"}");
+					return;
+				}
+				if (key == VK_BACK)
+				{
+					g_ws.send("{\"t\":\"chat_key\",\"k\":\"backspace\"}");
+					return;
+				}
+				if (key == VK_LEFT)
+				{
+					g_ws.send("{\"t\":\"chat_key\",\"k\":\"left\"}");
+					return;
+				}
+				if (key == VK_RIGHT)
+				{
+					g_ws.send("{\"t\":\"chat_key\",\"k\":\"right\"}");
+					return;
+				}
+				if (key == VK_UP)
+				{
+					g_ws.send("{\"t\":\"chat_key\",\"k\":\"up\"}");
+					return;
+				}
+				if (key == VK_DOWN)
+				{
+					g_ws.send("{\"t\":\"chat_key\",\"k\":\"down\"}");
+					return;
+				}
+
+				BYTE kState[256];
+				if (GetKeyboardState(kState))
+				{
+					WCHAR chars[4] = {};
+					int count = ToUnicode(key, scanCode, kState, chars, 4, 0);
+					for (int i = 0; i < count; ++i)
+					{
+						WCHAR ch = chars[i];
+						if (ch >= 32 && ch != 127)
+						{
+							char buf[64];
+							snprintf(buf, sizeof(buf), "{\"t\":\"chat_char\",\"c\":%u}", (unsigned int)ch);
+							g_ws.send(buf);
+						}
+					}
+				}
+				return;
+			}
+			else
+			{
+				// In pause break mode: pressing 'T' opens Minecraft chat
+				if (!isUpNow && !wasDownBefore && (key == 'T' || key == 0x54))
+				{
+					g_chat_mode = true;
+					g_chat_notify = true;
+					g_ws.send("{\"t\":\"chat_open\"}");
+					return;
+				}
+			}
+		}
+
 		if (isUpNow || wasDownBefore)
 			return;
 		if (key == VK_F7)
@@ -2486,7 +2591,14 @@ namespace
 		else if (key == VK_NUMLOCK)
 			g_skin_toggle = true;
 		else if (key == VK_PAUSE)
+		{
 			g_pause_toggle = true;
+			if (g_chat_mode)
+			{
+				g_chat_mode = false;
+				g_ws.send("{\"t\":\"chat_key\",\"k\":\"escape\"}");
+			}
+		}
 	}
 }
 
