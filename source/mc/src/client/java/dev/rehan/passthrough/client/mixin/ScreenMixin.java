@@ -30,12 +30,12 @@ abstract class ScreenMixin {
 		}
 
 		// Black shadow / border
-		graphics.fill(cx - 7, cy - 2, cx + 8, cy + 3, 0xDD000000);
-		graphics.fill(cx - 2, cy - 7, cx + 3, cy + 8, 0xDD000000);
+		graphics.fill(cx - 5, cy - 2, cx + 6, cy + 3, 0xDD000000);
+		graphics.fill(cx - 2, cy - 5, cx + 3, cy + 6, 0xDD000000);
 
 		// Crosshair lines
-		graphics.fill(cx - 6, cy - 1, cx + 7, cy + 2, crossColor);
-		graphics.fill(cx - 1, cy - 6, cx + 2, cy + 7, crossColor);
+		graphics.fill(cx - 4, cy - 1, cx + 5, cy + 2, crossColor);
+		graphics.fill(cx - 1, cy - 4, cx + 2, cy + 5, crossColor);
 
 		// Center red dot
 		graphics.fill(cx - 1, cy - 1, cx + 2, cy + 2, 0xFFFF3333);

@@ -145,10 +145,86 @@ public final class MobWar {
 		ServerLevel level = s.overworld();
 		syncProxies(level);
 		applyDamage(level);
+		protectWithers(level);
 		if (Passthrough.active) {
 			reportMobs(s, level);
 			reportWaterCurrents(level);
 		}
+	}
+
+	/** Prevents Wither bosses from falling through unloaded collision/ground. */
+	private static void protectWithers(final ServerLevel level) {
+		for (Entity e : level.getAllEntities()) {
+			if (!(e instanceof net.minecraft.world.entity.boss.wither.WitherBoss wither) || !wither.isAlive()) {
+				continue;
+			}
+
+			double ground = findGroundLevel(level, wither);
+			if (wither.getY() < ground + 1.8) {
+				wither.setPos(wither.getX(), ground + 2.0, wither.getZ());
+				Vec3 vel = wither.getDeltaMovement();
+				if (vel.y < 0) {
+					wither.setDeltaMovement(vel.x, Math.max(0.15, -vel.y * 0.5), vel.z);
+				}
+			}
+		}
+	}
+
+	private static double findGroundLevel(final ServerLevel level, final Entity entity) {
+		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+		int ex = (int) Math.floor(entity.getX());
+		int ez = (int) Math.floor(entity.getZ());
+		int ey = (int) Math.floor(entity.getY());
+
+		// 1. Scan downwards for existing solid block or barrier
+		for (int dy = 1; dy >= -35; dy--) {
+			p.set(ex, ey + dy, ez);
+			if (level.isInWorldBounds(p)) {
+				net.minecraft.world.level.block.state.BlockState state = level.getBlockState(p);
+				if (!state.isAir() && state.getFluidState().isEmpty()) {
+					return p.getY() + 1.0;
+				}
+			}
+		}
+
+		// 2. Fallback when collision isn't loaded: use nearest GTA ped proxy height
+		double bestDistSq = Double.MAX_VALUE;
+		double refGroundY = Double.NaN;
+		for (Villager v : proxies.values()) {
+			if (v != null && !v.isRemoved()) {
+				double dx = v.getX() - entity.getX();
+				double dz = v.getZ() - entity.getZ();
+				double d2 = dx * dx + dz * dz;
+				if (d2 < bestDistSq) {
+					bestDistSq = d2;
+					refGroundY = v.getY();
+				}
+			}
+		}
+
+		if (!Double.isNaN(refGroundY) && bestDistSq < 100.0 * 100.0) {
+			int gy = (int) Math.floor(refGroundY);
+			WorldBridge.solid(new int[] {
+				ex - 1, ez - 1, gy - 1, gy,
+				ex,     ez - 1, gy - 1, gy,
+				ex + 1, ez - 1, gy - 1, gy,
+				ex - 1, ez,     gy - 1, gy,
+				ex,     ez,     gy - 1, gy,
+				ex + 1, ez,     gy - 1, gy,
+				ex - 1, ez + 1, gy - 1, gy,
+				ex,     ez + 1, gy - 1, gy,
+				ex + 1, ez + 1, gy - 1, gy
+			});
+			return refGroundY;
+		}
+
+		// Fallback to first player's height
+		ServerPlayer player = level.getServer().getPlayerList().getPlayers().isEmpty() ? null : level.getServer().getPlayerList().getPlayers().get(0);
+		if (player != null) {
+			return player.getY();
+		}
+
+		return 0.0;
 	}
 
 	private static void syncProxies(final ServerLevel level) {

@@ -1011,6 +1011,9 @@ namespace
 				}
 				continue;
 			}
+			float groundZ = 0.0f;
+			if (natives::GetGroundZFor3dCoord(m.x, m.y, m.z + 2.0f, &groundZ, FALSE, FALSE) && m.z < groundZ)
+				m.z = groundZ;
 			natives::SetEntityCoordsNoOffset(m.ped, m.x, m.y, m.z + 1.0f);
 			if (g_doubleVis == 1)
 				natives::SetEntityLocallyInvisible(m.ped);
@@ -2051,7 +2054,21 @@ namespace
 		const double radius = json_num(message, "r", 4.0);
 		g_booms[g_boomNext++ % 8] = {float(x), float(-z), float(y - g_yOffset), natives::GetGameTimer() + 500};
 		const std::string src = json_str(message, "src");
-		if (src == "fireball" || src == "wither_skull" || src == "dragon_fireball")
+		if (src == "wither")
+		{
+			// Wither phase 1 spawn explosion: RPG rocket blast
+			natives::AddExplosion(float(x), float(-z), float(y - g_yOffset), 4 /* EXP_TAG_ROCKET (RPG) */, 1.8f, TRUE, FALSE, 1.2f, FALSE);
+			shake_from(float(x), float(-z), float(y - g_yOffset), 1.5f);
+			return;
+		}
+		if (src == "wither_skull")
+		{
+			// Wither head projectile explosion: grenade explosion
+			natives::AddExplosion(float(x), float(-z), float(y - g_yOffset), 0 /* EXP_TAG_GRENADE */, 1.0f, TRUE, FALSE, 0.7f, FALSE);
+			shake_from(float(x), float(-z), float(y - g_yOffset), 0.8f);
+			return;
+		}
+		if (src == "fireball" || src == "dragon_fireball")
 		{
 			// a ghast's fireball: a rocket's blast and burning fuel
 			natives::AddExplosion(float(x), float(-z), float(y - g_yOffset), 4, 1.0f, TRUE, FALSE, 0.6f, FALSE);
