@@ -27,7 +27,11 @@ namespace natives
 	}
 
 	inline void DisableControlAction(int group, int control, BOOL disable) { invoke<Void>(0xFE99B66D079CF6BC, group, control, disable); }
-	inline void DisableAllControlActions(int group) { invoke<Void>(0x5F47938D8234BA60, group); }
+	inline void DisableAllControlActions(int group)
+	{
+		for (int i = 0; i <= 360; ++i)
+			DisableControlAction(group, i, TRUE);
+	}
 	inline BOOL IsDisabledControlJustPressed(int group, int control) { return invoke<BOOL>(0x91AEF906BCA88877, group, control); }
 	inline BOOL IsDisabledControlJustReleased(int group, int control) { return invoke<BOOL>(0x305C8DCD79DA8B0F, group, control); }
 
