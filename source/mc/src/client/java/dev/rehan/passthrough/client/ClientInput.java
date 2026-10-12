@@ -11,7 +11,12 @@ import net.minecraft.world.entity.player.Inventory;
 import org.lwjgl.sdl.SDLVideo;
 
 /** Host input, applied on the client thread: the host window has the focus, so Minecraft never sees these itself. */
-final class ClientInput {
+public final class ClientInput {
+	public static volatile double virtualCursorX = 0.5;
+	public static volatile double virtualCursorY = 0.5;
+	public static volatile boolean virtualCursorVisible = false;
+	public static volatile int virtualCursorFlash = 0;
+
 	private ClientInput() {
 	}
 
@@ -114,11 +119,15 @@ final class ClientInput {
 				}
 			}
 			case "inv_open" -> {
+				ClientInput.virtualCursorVisible = true;
+				ClientInput.virtualCursorX = 0.5;
+				ClientInput.virtualCursorY = 0.5;
 				if (minecraft.player != null) {
 					minecraft.gui.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(minecraft.player));
 				}
 			}
 			case "inv_close" -> {
+				ClientInput.virtualCursorVisible = false;
 				if (minecraft.gui.screen() != null) {
 					minecraft.gui.screen().onClose();
 					minecraft.gui.setScreen(null);
@@ -128,6 +137,9 @@ final class ClientInput {
 				if (m.has("x") && m.has("y")) {
 					double normX = m.get("x").getAsDouble();
 					double normY = m.get("y").getAsDouble();
+					ClientInput.virtualCursorVisible = true;
+					ClientInput.virtualCursorX = normX;
+					ClientInput.virtualCursorY = normY;
 					double screenW = minecraft.getWindow().getScreenWidth();
 					double screenH = minecraft.getWindow().getScreenHeight();
 					((dev.rehan.passthrough.client.mixin.MouseHandlerAccessor) minecraft.mouseHandler).passthrough$setXpos(normX * screenW);
@@ -144,17 +156,25 @@ final class ClientInput {
 					double normX = m.get("x").getAsDouble();
 					double normY = m.get("y").getAsDouble();
 					int btn = m.has("btn") ? m.get("btn").getAsInt() : 0;
+					int sdlBtn = (btn == 1) ? 3 : 1; // 1 = Left Click, 3 = Right Click in SDL3/Minecraft 26.3
 					double screenW = minecraft.getWindow().getScreenWidth();
 					double screenH = minecraft.getWindow().getScreenHeight();
 					double guiX = normX * minecraft.getWindow().getGuiScaledWidth();
 					double guiY = normY * minecraft.getWindow().getGuiScaledHeight();
 					((dev.rehan.passthrough.client.mixin.MouseHandlerAccessor) minecraft.mouseHandler).passthrough$setXpos(normX * screenW);
 					((dev.rehan.passthrough.client.mixin.MouseHandlerAccessor) minecraft.mouseHandler).passthrough$setYpos(normY * screenH);
+					ClientInput.virtualCursorVisible = true;
+					ClientInput.virtualCursorFlash = 8;
+					ClientInput.virtualCursorX = normX;
+					ClientInput.virtualCursorY = normY;
 					if (minecraft.gui.screen() != null) {
-						net.minecraft.client.input.MouseButtonInfo info = new net.minecraft.client.input.MouseButtonInfo(btn, 0);
+						net.minecraft.client.gui.screens.Screen screen = minecraft.gui.screen();
+						screen.mouseMoved(guiX, guiY);
+						net.minecraft.client.input.MouseButtonInfo info = new net.minecraft.client.input.MouseButtonInfo(sdlBtn, 0);
 						net.minecraft.client.input.MouseButtonEvent event = new net.minecraft.client.input.MouseButtonEvent(guiX, guiY, info);
-						minecraft.gui.screen().mouseClicked(event, false);
-						minecraft.gui.screen().mouseReleased(event);
+						screen.afterMouseAction();
+						screen.mouseClicked(event, false);
+						screen.mouseReleased(event);
 					}
 				}
 			}

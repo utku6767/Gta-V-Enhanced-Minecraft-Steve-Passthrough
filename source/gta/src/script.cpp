@@ -2476,20 +2476,8 @@ namespace
 					sendf("{\"t\":\"inv_move\",\"x\":%.4f,\"y\":%.4f}", g_cursor_x, g_cursor_y);
 				}
 
-				// Draw high-visibility virtual cursor on GTA screen
-				// Outer black shadows
-				natives::DrawRect(g_cursor_x, g_cursor_y, 0.024f, 0.006f, 0, 0, 0, 220);
-				natives::DrawRect(g_cursor_x, g_cursor_y, 0.005f, 0.034f, 0, 0, 0, 220);
-				// Crosshair lines (white, turns lime green briefly on click)
-				int cr = (g_cursor_click_flash > 0) ? 60 : 255;
-				int cg = (g_cursor_click_flash > 0) ? 255 : 255;
-				int cb = (g_cursor_click_flash > 0) ? 60 : 255;
 				if (g_cursor_click_flash > 0)
 					--g_cursor_click_flash;
-				natives::DrawRect(g_cursor_x, g_cursor_y, 0.020f, 0.003f, cr, cg, cb, 255);
-				natives::DrawRect(g_cursor_x, g_cursor_y, 0.0025f, 0.028f, cr, cg, cb, 255);
-				// Center red dot
-				natives::DrawRect(g_cursor_x, g_cursor_y, 0.006f, 0.008f, 255, 40, 40, 255);
 			}
 			else if (g_chat_mode)
 			{
