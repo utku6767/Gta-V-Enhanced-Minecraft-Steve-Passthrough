@@ -68,6 +68,32 @@ public final class MobWar {
 	private static boolean reportedMobs;
 	private static boolean reportedWaterPeds;
 
+	private enum DragonCombatState {
+		CIRCLING,
+		SWEEP_DIVE,
+		PULL_UP
+	}
+
+	private static class DragonData {
+		DragonCombatState state = DragonCombatState.CIRCLING;
+		int stateTicks = 0;
+		double circleAngle = 0.0;
+		Vec3 currentFlightTarget = null;
+		int lastFireballTick = 0;
+		Vec3 sweepDir = null;
+	}
+
+	private static final Map<Integer, DragonData> dragonStates = new HashMap<>();
+
+	public static Vec3 getDragonFlightTarget(final net.minecraft.world.entity.boss.enderdragon.EnderDragon dragon) {
+		DragonData data = dragonStates.get(dragon.getId());
+		return data != null ? data.currentFlightTarget : null;
+	}
+
+	public static boolean hasActiveDragonTarget(final net.minecraft.world.entity.boss.enderdragon.EnderDragon dragon) {
+		return dragonStates.containsKey(dragon.getId());
+	}
+
 	private MobWar() {
 	}
 
@@ -153,37 +179,123 @@ public final class MobWar {
 		}
 	}
 
-	/** Prevents Wither and Ender Dragon bosses from falling through unloaded collision/ground, and handles dragon sweep attacks. */
+	/** Prevents Wither and Ender Dragon bosses from falling through unloaded collision/ground, regulates Wither height, and runs dragon tactical sweeping combat. */
 	private static void protectBosses(final ServerLevel level) {
 		for (Entity e : level.getAllEntities()) {
 			if (e instanceof net.minecraft.world.entity.boss.wither.WitherBoss wither && wither.isAlive()) {
 				double ground = findGroundLevel(level, wither);
-				if (wither.getY() < ground + 1.8) {
-					wither.setPos(wither.getX(), ground + 2.0, wither.getZ());
+				// A. Anti-clip ground protection: ONLY trigger if wither actually clips below ground surface
+				if (wither.getY() < ground) {
+					wither.setPos(wither.getX(), ground + 0.5, wither.getZ());
 					Vec3 vel = wither.getDeltaMovement();
 					if (vel.y < 0) {
-						wither.setDeltaMovement(vel.x, Math.max(0.15, -vel.y * 0.5), vel.z);
+						wither.setDeltaMovement(vel.x, Math.max(0.2, -vel.y * 0.5), vel.z);
+					}
+				}
+
+				// B. Prevent Wither from floating off into the stratosphere:
+				LivingEntity target = nearestProxy(level, wither);
+				if (target == null && !level.getServer().getPlayerList().getPlayers().isEmpty()) {
+					target = level.getServer().getPlayerList().getPlayers().get(0);
+				}
+
+				if (target != null) {
+					double targetY = target.getY();
+					double desiredY = targetY + 3.5; // ideal strafe/bombing height: 3.5 blocks above target
+					double heightDiff = wither.getY() - desiredY;
+					Vec3 vel = wither.getDeltaMovement();
+
+					// If wither is floating too high above its target, gently pull it down into combat range
+					if (heightDiff > 2.5) {
+						wither.setDeltaMovement(vel.x, Math.max(-0.4, vel.y - 0.08), vel.z);
 					}
 				}
 				continue;
 			}
 
 			if (e instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon dragon && dragon.isAlive()) {
-				// 1. Anti-clip ground protection: keep dragon from dropping under unstreamed host terrain
 				double ground = findGroundLevel(level, dragon);
-				if (dragon.getY() < ground + 3.0) {
-					dragon.setPos(dragon.getX(), ground + 4.5, dragon.getZ());
+				// Anti-clip ground protection: keep dragon from dropping under unstreamed host terrain
+				if (dragon.getY() < ground + 0.5) {
+					dragon.setPos(dragon.getX(), ground + 1.2, dragon.getZ());
 					Vec3 vel = dragon.getDeltaMovement();
 					if (vel.y < 0) {
-						dragon.setDeltaMovement(vel.x, Math.max(0.35, -vel.y * 0.6), vel.z);
+						dragon.setDeltaMovement(vel.x * 1.1, Math.max(0.3, -vel.y * 0.5), vel.z * 1.1);
 					}
 				}
 
-				// 2. Sweeping attack against GTA ped proxies: ragdoll npcs on collision / flyby
-				long now = System.currentTimeMillis();
-				Villager nearest = null;
-				double nearestDistSq = Double.MAX_VALUE;
+				// Find combat target: nearest proxy or player
+				LivingEntity target = nearestProxy(level, dragon);
+				if (target == null && !level.getServer().getPlayerList().getPlayers().isEmpty()) {
+					target = level.getServer().getPlayerList().getPlayers().get(0);
+				}
+				if (target == null) {
+					continue;
+				}
 
+				DragonData data = dragonStates.computeIfAbsent(dragon.getId(), id -> new DragonData());
+				data.stateTicks++;
+				Vec3 targetPos = target.position();
+				double targetGround = findGroundLevel(level, target);
+
+				if (data.state == DragonCombatState.CIRCLING) {
+					// Orbit above combat center at radius 35 blocks, height +22 blocks
+					data.circleAngle += 0.035;
+					double ox = Math.cos(data.circleAngle) * 35.0;
+					double oz = Math.sin(data.circleAngle) * 35.0;
+					data.currentFlightTarget = new Vec3(targetPos.x + ox, targetGround + 22.0, targetPos.z + oz);
+
+					// Fireball barrage every ~4-5 seconds
+					if (data.stateTicks - data.lastFireballTick > 90) {
+						data.lastFireballTick = data.stateTicks;
+						Vec3 dPos = dragon.position();
+						Vec3 aim = targetPos.subtract(dPos).normalize();
+						var fireball = new net.minecraft.world.entity.projectile.hurtingprojectile.DragonFireball(level, dragon, aim);
+						fireball.setPos(dPos.x, dPos.y - 1.2, dPos.z);
+						level.addFreshEntity(fireball);
+						level.playSound(null, dragon.blockPosition(), net.minecraft.sounds.SoundEvents.ENDER_DRAGON_SHOOT, net.minecraft.sounds.SoundSource.HOSTILE, 2.5f, 0.9f);
+					}
+
+					// After circling for ~8 seconds (160 ticks), initiate sweeping dive
+					if (data.stateTicks > 160) {
+						data.state = DragonCombatState.SWEEP_DIVE;
+						data.stateTicks = 0;
+						Vec3 dFlat = targetPos.subtract(dragon.position());
+						Vec3 horizontal = new Vec3(dFlat.x, 0, dFlat.z).normalize();
+						if (horizontal.lengthSqr() < 0.01) {
+							horizontal = new Vec3(1, 0, 0);
+						}
+						data.sweepDir = horizontal;
+						// Aim for ground level right past target (+20 blocks forward)
+						data.currentFlightTarget = new Vec3(targetPos.x + horizontal.x * 20.0, targetGround + 1.5, targetPos.z + horizontal.z * 20.0);
+						level.playSound(null, dragon.blockPosition(), net.minecraft.sounds.SoundEvents.ENDER_DRAGON_GROWL, net.minecraft.sounds.SoundSource.HOSTILE, 3.5f, 0.85f);
+					}
+				} else if (data.state == DragonCombatState.SWEEP_DIVE) {
+					// Low altitude dive: aggressively pull down towards ground and accelerate forward
+					Vec3 toAim = data.currentFlightTarget.subtract(dragon.position()).normalize();
+					Vec3 vel = dragon.getDeltaMovement();
+					dragon.setDeltaMovement(vel.x * 0.8 + toAim.x * 0.45, Math.max(-0.6, vel.y * 0.8 + toAim.y * 0.45), vel.z * 0.8 + toAim.z * 0.45);
+
+					double distToDiveTarget = dragon.position().subtract(data.currentFlightTarget).horizontalDistance();
+					if (distToDiveTarget < 10.0 || data.stateTicks > 80) {
+						// Finished low altitude sweep pass, pull up!
+						data.state = DragonCombatState.PULL_UP;
+						data.stateTicks = 0;
+						Vec3 fwd = data.sweepDir != null ? data.sweepDir : new Vec3(dragon.getDeltaMovement().x, 0, dragon.getDeltaMovement().z).normalize();
+						data.currentFlightTarget = new Vec3(dragon.getX() + fwd.x * 35.0, targetGround + 26.0, dragon.getZ() + fwd.z * 35.0);
+					}
+				} else if (data.state == DragonCombatState.PULL_UP) {
+					// Rapidly ascend back into the sky
+					Vec3 vel = dragon.getDeltaMovement();
+					dragon.setDeltaMovement(vel.x * 0.9, Math.min(0.65, vel.y + 0.12), vel.z * 0.9);
+					if (dragon.getY() > targetGround + 18.0 || data.stateTicks > 60) {
+						data.state = DragonCombatState.CIRCLING;
+						data.stateTicks = 0;
+					}
+				}
+
+				// Sweeping collision attack detection: hits peds when dragon flies close
+				long now = System.currentTimeMillis();
 				for (Map.Entry<Integer, Villager> entry : proxies.entrySet()) {
 					Villager v = entry.getValue();
 					if (v == null || v.isRemoved()) {
@@ -191,38 +303,21 @@ public final class MobWar {
 					}
 
 					double distSq = v.distanceToSqr(dragon);
-					if (distSq < nearestDistSq) {
-						nearestDistSq = distSq;
-						nearest = v;
-					}
-
-					// Sweeping hit radius: dragon is ~16x8x16, check within 9.5 blocks of dragon body
-					if (distSq < 9.5 * 9.5) {
+					// Hit radius: 10.5 blocks around dragon body
+					if (distSq < 10.5 * 10.5) {
 						int handle = entry.getKey();
 						Long lastHit = dragonSweepHits.get(handle);
-						if (lastHit == null || now - lastHit > 1200L) {
+						if (lastHit == null || now - lastHit > 1000L) {
 							dragonSweepHits.put(handle, now);
-							Vec3 vel = dragon.getDeltaMovement();
-							double speed = vel.length();
-							double sweepDmg = Math.max(12.0, speed * 25.0);
+							Vec3 dVel = dragon.getDeltaMovement();
+							double speed = dVel.length();
+							double sweepDmg = Math.max(16.0, speed * 28.0);
 							Passthrough.events.accept(String.format(Locale.ROOT,
 								"{\"t\":\"mobhit\",\"h\":%d,\"d\":%.2f,\"from\":[%.3f,%.3f,%.3f],\"k\":\"ender_dragon\"}",
 								handle, sweepDmg, dragon.getX(), dragon.getY(), dragon.getZ()));
 							level.playSound(null, v.blockPosition(),
 								net.minecraft.sounds.SoundEvents.ENDER_DRAGON_GROWL,
-								net.minecraft.sounds.SoundSource.HOSTILE, 1.8f, 0.95f + level.getRandom().nextFloat() * 0.1f);
-						}
-					}
-				}
-
-				// 3. Boss phase targeting: if holding pattern and proxies nearby, switch to strafe attack targeting proxy
-				if (nearest != null && nearestDistSq < 80.0 * 80.0) {
-					var pm = dragon.getPhaseManager();
-					if (pm.getCurrentPhase().getPhase() == net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase.HOLDING_PATTERN) {
-						pm.setPhase(net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase.STRAFE_PLAYER);
-						var strafe = pm.getPhase(net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase.STRAFE_PLAYER);
-						if (strafe != null) {
-							strafe.setTarget(nearest);
+								net.minecraft.sounds.SoundSource.HOSTILE, 2.0f, 0.95f + level.getRandom().nextFloat() * 0.1f);
 						}
 					}
 				}
@@ -236,11 +331,13 @@ public final class MobWar {
 		int ez = (int) Math.floor(entity.getZ());
 		int ey = (int) Math.floor(entity.getY());
 
-		// 1. Scan downwards for existing solid block or barrier
-		for (int dy = 1; dy >= -35; dy--) {
-			p.set(ex, ey + dy, ez);
+		// 1. Scan downwards from entity Y down to bottom of world for real solid ground/barriers
+		int startY = Math.min(ey, level.getMaxY() - 1);
+		int minY = Math.max(level.getMinY(), startY - 128);
+		for (int y = startY; y >= minY; y--) {
+			p.set(ex, y, ez);
 			if (level.isInWorldBounds(p)) {
-				net.minecraft.world.level.block.state.BlockState state = level.getBlockState(p);
+				var state = level.getBlockState(p);
 				if (!state.isAir() && state.getFluidState().isEmpty()) {
 					return p.getY() + 1.0;
 				}
@@ -262,7 +359,7 @@ public final class MobWar {
 			}
 		}
 
-		if (!Double.isNaN(refGroundY) && bestDistSq < 100.0 * 100.0) {
+		if (!Double.isNaN(refGroundY) && bestDistSq < 150.0 * 150.0) {
 			int gy = (int) Math.floor(refGroundY);
 			WorldBridge.solid(new int[] {
 				ex - 1, ez - 1, gy - 1, gy,
@@ -278,7 +375,7 @@ public final class MobWar {
 			return refGroundY;
 		}
 
-		// Fallback to first player's height
+		// Fallback to first player's feet height
 		ServerPlayer player = level.getServer().getPlayerList().getPlayers().isEmpty() ? null : level.getServer().getPlayerList().getPlayers().get(0);
 		if (player != null) {
 			return player.getY();
@@ -579,6 +676,7 @@ public final class MobWar {
 		handleOf.clear();
 		missingTicks.clear();
 		dragonSweepHits.clear();
+		dragonStates.clear();
 		reportedWaterPeds = false;
 	}
 
@@ -589,6 +687,7 @@ public final class MobWar {
 		handleOf.clear();
 		missingTicks.clear();
 		dragonSweepHits.clear();
+		dragonStates.clear();
 		peds.set(null);
 		damage.clear();
 		reportedMobs = false;
