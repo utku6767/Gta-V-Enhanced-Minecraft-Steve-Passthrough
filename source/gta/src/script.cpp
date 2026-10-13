@@ -444,6 +444,9 @@ namespace
 		natives::SetEntityRotation(g_gunFit.held, g_gunFit.pitch, g_gunFit.roll + r.x * g_gunFit.tilt, r.z + g_gunFit.yaw);
 	}
 
+	static Vector3 g_crosshairTarget = {};
+	static bool g_crosshairValid = false;
+
 	/// The crosshair: where GTA's aim (its own camera's centre ray) meets the world, as seen from the camera that
 	/// renders (the aim camera is moved out past Steve's head, so that isn't the middle of the screen).
 	void reticle_tick(Ped ped)
@@ -461,11 +464,23 @@ namespace
 		{
 			tx = end.x; ty = end.y; tz = end.z;
 		}
+		g_crosshairTarget.x = tx;
+		g_crosshairTarget.y = ty;
+		g_crosshairTarget.z = tz;
+		g_crosshairValid = true;
+
 		float sx = 0.5f, sy = 0.5f;
 		if (!natives::GetScreenCoordFromWorldCoord(tx, ty, tz, &sx, &sy))
 			return;
-		natives::DrawRect(sx, sy, 0.011f, 0.0021f, 255, 255, 255, 220);
-		natives::DrawRect(sx, sy, 0.0012f, 0.019f, 255, 255, 255, 220);
+
+		// Tactical custom crosshair: Center dot + 4 bracket bars
+		natives::DrawRect(sx, sy, 0.0022f, 0.0038f, 255, 60, 60, 240);
+		const float gapX = 0.0045f, lenX = 0.007f, thickY = 0.0018f;
+		natives::DrawRect(sx - gapX - lenX * 0.5f, sy, lenX, thickY, 255, 255, 255, 220);
+		natives::DrawRect(sx + gapX + lenX * 0.5f, sy, lenX, thickY, 255, 255, 255, 220);
+		const float gapY = 0.0075f, lenY = 0.012f, thickX = 0.0012f;
+		natives::DrawRect(sx, sy - gapY - lenY * 0.5f, thickX, lenY, 255, 255, 255, 220);
+		natives::DrawRect(sx, sy + gapY + lenY * 0.5f, thickX, lenY, 255, 255, 255, 220);
 	}
 
 	/// GTA's over-the-shoulder aim camera is framed for GTA's ped, whose head is far narrower than Steve's: while
@@ -2424,17 +2439,41 @@ namespace
 				natives::DisableControlAction(0, control, TRUE);
 		if (gun)
 		{
-			// GTA aims and fires; its reticle shows, and its weapon stays visible in Steve's hands
-			// GTA's own weapon fires (flash, tracers); the copy in Steve's hands is what shows; the crosshair is ours
-			natives::SetPedCurrentWeaponVisible(ped, TRUE);
+			// Hide the GTA ped's native weapon to eliminate duplicate/double guns;
+			// only the model attached to Steve's hands (g_gunFit.held) is displayed.
+			natives::SetPedCurrentWeaponVisible(ped, FALSE);
 			if (const Entity w = natives::GetCurrentPedWeaponEntityIndex(ped))
-				natives::SetEntityVisible(w, TRUE, FALSE);
+				natives::SetEntityVisible(w, FALSE, FALSE);
 			reticle_tick(ped);
+
+			// Direct shots accurately to the custom crosshair's world point
+			if (natives::IsPedShooting(ped) && g_crosshairValid)
+			{
+				Hash curWeap = 0;
+				if (natives::GetCurrentPedWeapon(ped, &curWeap, TRUE))
+				{
+					Vector3 muzzle = g_gunFit.held ? natives::GetEntityCoords(g_gunFit.held, TRUE) : natives::GetEntityCoords(ped, TRUE);
+					const Vector3 r = natives::GetGameplayCamRot(2);
+					const float d2r = 3.14159265f / 180.0f, h = r.z * d2r, pt = r.x * d2r;
+					const float fx = -std::sin(h) * std::cos(pt), fy = std::cos(h) * std::cos(pt), fz = std::sin(pt);
+					muzzle.x += fx * 0.6f;
+					muzzle.y += fy * 0.6f;
+					muzzle.z += fz * 0.6f + 0.1f;
+					natives::ShootSingleBulletBetweenCoords(
+						muzzle.x, muzzle.y, muzzle.z,
+						g_crosshairTarget.x, g_crosshairTarget.y, g_crosshairTarget.z,
+						200, curWeap, ped);
+				}
+			}
 		}
-		else if (!g_chat_mode && !g_inv_mode)
+		else
 		{
-			forward_button(24, "attack");
-			forward_button(25, "use");
+			g_crosshairValid = false;
+			if (!g_chat_mode && !g_inv_mode)
+			{
+				forward_button(24, "attack");
+				forward_button(25, "use");
+			}
 		}
 		aim_cam_tick(gun && natives::IsPlayerFreeAiming(natives::PlayerId()));
 		gun_model_tick(ped, gun && !natives::IsPauseMenuActive());

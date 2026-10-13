@@ -56,6 +56,8 @@ namespace natives
 	inline void ShowHudComponentThisFrame(int id) { invoke<Void>(0x0B4DF1FA60C0E664, id); }
 	inline void SetPedCurrentWeaponVisible(Ped p, BOOL visible) { invoke<Void>(0x0725A4CCFDED9A70, p, visible, TRUE, TRUE, TRUE); }
 	inline BOOL IsPlayerFreeAiming(Player p) { return invoke<BOOL>(0x2E397FD2ECD37C87, p); }
+	inline BOOL GetCurrentPedWeapon(Ped p, Hash *weapon, BOOL p2) { return invoke<BOOL>(0x3A87E44BB9A01D54, p, weapon, p2); }
+	inline BOOL IsPedShooting(Ped p) { return invoke<BOOL>(0x34FF9636545E4A34, p); }
 	inline Vector3 GetGameplayCamCoord() { return invoke<Vector3>(0x14D6F5678D8F1B37); }
 	inline float GetGameplayCamFov() { return invoke<float>(0x65019750A0324133); }
 	inline void RequestWeaponAsset(Hash w) { invoke<Void>(0x5443438F033E29C3, w, 31, 0); }
