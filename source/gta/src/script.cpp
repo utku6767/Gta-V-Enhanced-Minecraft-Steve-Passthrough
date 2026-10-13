@@ -2451,10 +2451,10 @@ namespace
 			reticle_tick(ped);
 
 			// Direct shots accurately to the custom crosshair's world point
-			if (natives::IsPedShooting(ped) && g_crosshairValid)
+			if ((natives::IsPedShooting(ped) || natives::IsDisabledControlJustPressed(0, 24)) && g_crosshairValid)
 			{
-				Hash curWeap = 0;
-				if (natives::GetCurrentPedWeapon(ped, &curWeap, TRUE))
+				const Hash curWeap = (g_gun >= 0 && g_gun < int(std::size(kGuns))) ? kGuns[g_gun] : 0;
+				if (curWeap != 0)
 				{
 					Vector3 muzzle = g_gunFit.held ? natives::GetEntityCoords(g_gunFit.held, TRUE) : natives::GetEntityCoords(ped, TRUE);
 					const Vector3 r = natives::GetFinalRenderedCamRot(2);
