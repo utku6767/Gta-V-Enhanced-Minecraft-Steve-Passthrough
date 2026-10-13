@@ -829,9 +829,12 @@ namespace
 		const float len = std::max(0.01f, std::sqrt(dx * dx + dy * dy));
 		dx /= len;
 		dy /= len;
-		const bool heavy = kind == "iron_golem" || kind == "ravager" || kind == "warden";
-		natives::SetPedToRagdoll(victim, heavy ? 3000 : 1200);
-		natives::ApplyForceToEntity(victim, dx * (heavy ? 14.0f : 5.0f), dy * (heavy ? 14.0f : 5.0f), heavy ? 10.0f : 2.5f);
+		const bool dragonHit = (kind == "ender_dragon");
+		const bool heavy = kind == "iron_golem" || kind == "ravager" || kind == "warden" || dragonHit;
+		natives::SetPedToRagdoll(victim, dragonHit ? 5000 : (heavy ? 3000 : 1200));
+		const float hForce = dragonHit ? 30.0f : (heavy ? 14.0f : 5.0f);
+		const float vForce = dragonHit ? 18.0f : (heavy ? 10.0f : 2.5f);
+		natives::ApplyForceToEntity(victim, dx * hForce, dy * hForce, vForce);
 	}
 
 	Hash squad_model(const char *name)
@@ -2068,7 +2071,15 @@ namespace
 			shake_from(float(x), float(-z), float(y - g_yOffset), 0.8f);
 			return;
 		}
-		if (src == "fireball" || src == "dragon_fireball")
+		if (src == "dragon_fireball")
+		{
+			// Dragon fireball: small railgun explosion + lingering tear gas
+			natives::AddExplosion(float(x), float(-z), float(y - g_yOffset), 36 /* EXP_TAG_RAILGUN */, 0.75f, TRUE, FALSE, 0.6f, FALSE);
+			natives::AddExplosion(float(x), float(-z), float(y - g_yOffset), 20 /* EXP_TAG_TEARGAS */, 1.2f, TRUE, FALSE, 0.0f, FALSE);
+			shake_from(float(x), float(-z), float(y - g_yOffset), 0.9f);
+			return;
+		}
+		if (src == "fireball")
 		{
 			// a ghast's fireball: a rocket's blast and burning fuel
 			natives::AddExplosion(float(x), float(-z), float(y - g_yOffset), 4, 1.0f, TRUE, FALSE, 0.6f, FALSE);

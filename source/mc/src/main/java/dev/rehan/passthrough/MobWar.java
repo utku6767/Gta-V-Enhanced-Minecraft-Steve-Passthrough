@@ -64,6 +64,7 @@ public final class MobWar {
 	private static final Map<Integer, Villager> proxies = new HashMap<>();
 	private static final Map<Integer, Integer> handleOf = new HashMap<>();
 	private static final Map<Integer, Integer> missingTicks = new HashMap<>();
+	private static final Map<Integer, Long> dragonSweepHits = new HashMap<>();
 	private static boolean reportedMobs;
 	private static boolean reportedWaterPeds;
 
@@ -145,26 +146,85 @@ public final class MobWar {
 		ServerLevel level = s.overworld();
 		syncProxies(level);
 		applyDamage(level);
-		protectWithers(level);
+		protectBosses(level);
 		if (Passthrough.active) {
 			reportMobs(s, level);
 			reportWaterCurrents(level);
 		}
 	}
 
-	/** Prevents Wither bosses from falling through unloaded collision/ground. */
-	private static void protectWithers(final ServerLevel level) {
+	/** Prevents Wither and Ender Dragon bosses from falling through unloaded collision/ground, and handles dragon sweep attacks. */
+	private static void protectBosses(final ServerLevel level) {
 		for (Entity e : level.getAllEntities()) {
-			if (!(e instanceof net.minecraft.world.entity.boss.wither.WitherBoss wither) || !wither.isAlive()) {
+			if (e instanceof net.minecraft.world.entity.boss.wither.WitherBoss wither && wither.isAlive()) {
+				double ground = findGroundLevel(level, wither);
+				if (wither.getY() < ground + 1.8) {
+					wither.setPos(wither.getX(), ground + 2.0, wither.getZ());
+					Vec3 vel = wither.getDeltaMovement();
+					if (vel.y < 0) {
+						wither.setDeltaMovement(vel.x, Math.max(0.15, -vel.y * 0.5), vel.z);
+					}
+				}
 				continue;
 			}
 
-			double ground = findGroundLevel(level, wither);
-			if (wither.getY() < ground + 1.8) {
-				wither.setPos(wither.getX(), ground + 2.0, wither.getZ());
-				Vec3 vel = wither.getDeltaMovement();
-				if (vel.y < 0) {
-					wither.setDeltaMovement(vel.x, Math.max(0.15, -vel.y * 0.5), vel.z);
+			if (e instanceof net.minecraft.world.entity.boss.enderdragon.EnderDragon dragon && dragon.isAlive()) {
+				// 1. Anti-clip ground protection: keep dragon from dropping under unstreamed host terrain
+				double ground = findGroundLevel(level, dragon);
+				if (dragon.getY() < ground + 3.0) {
+					dragon.setPos(dragon.getX(), ground + 4.5, dragon.getZ());
+					Vec3 vel = dragon.getDeltaMovement();
+					if (vel.y < 0) {
+						dragon.setDeltaMovement(vel.x, Math.max(0.35, -vel.y * 0.6), vel.z);
+					}
+				}
+
+				// 2. Sweeping attack against GTA ped proxies: ragdoll npcs on collision / flyby
+				long now = System.currentTimeMillis();
+				Villager nearest = null;
+				double nearestDistSq = Double.MAX_VALUE;
+
+				for (Map.Entry<Integer, Villager> entry : proxies.entrySet()) {
+					Villager v = entry.getValue();
+					if (v == null || v.isRemoved()) {
+						continue;
+					}
+
+					double distSq = v.distanceToSqr(dragon);
+					if (distSq < nearestDistSq) {
+						nearestDistSq = distSq;
+						nearest = v;
+					}
+
+					// Sweeping hit radius: dragon is ~16x8x16, check within 9.5 blocks of dragon body
+					if (distSq < 9.5 * 9.5) {
+						int handle = entry.getKey();
+						Long lastHit = dragonSweepHits.get(handle);
+						if (lastHit == null || now - lastHit > 1200L) {
+							dragonSweepHits.put(handle, now);
+							Vec3 vel = dragon.getDeltaMovement();
+							double speed = vel.length();
+							double sweepDmg = Math.max(12.0, speed * 25.0);
+							Passthrough.events.accept(String.format(Locale.ROOT,
+								"{\"t\":\"mobhit\",\"h\":%d,\"d\":%.2f,\"from\":[%.3f,%.3f,%.3f],\"k\":\"ender_dragon\"}",
+								handle, sweepDmg, dragon.getX(), dragon.getY(), dragon.getZ()));
+							level.playSound(null, v.blockPosition(),
+								net.minecraft.sounds.SoundEvents.ENDER_DRAGON_GROWL,
+								net.minecraft.sounds.SoundSource.HOSTILE, 1.8f, 0.95f + level.getRandom().nextFloat() * 0.1f);
+						}
+					}
+				}
+
+				// 3. Boss phase targeting: if holding pattern and proxies nearby, switch to strafe attack targeting proxy
+				if (nearest != null && nearestDistSq < 80.0 * 80.0) {
+					var pm = dragon.getPhaseManager();
+					if (pm.getCurrentPhase().getPhase() == net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase.HOLDING_PATTERN) {
+						pm.setPhase(net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase.STRAFE_PLAYER);
+						var strafe = pm.getPhase(net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase.STRAFE_PLAYER);
+						if (strafe != null) {
+							strafe.setTarget(nearest);
+						}
+					}
 				}
 			}
 		}
@@ -518,6 +578,7 @@ public final class MobWar {
 		proxies.clear();
 		handleOf.clear();
 		missingTicks.clear();
+		dragonSweepHits.clear();
 		reportedWaterPeds = false;
 	}
 
@@ -527,6 +588,7 @@ public final class MobWar {
 		proxies.clear();
 		handleOf.clear();
 		missingTicks.clear();
+		dragonSweepHits.clear();
 		peds.set(null);
 		damage.clear();
 		reportedMobs = false;

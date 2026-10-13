@@ -2,6 +2,6 @@
 	"required": true,
 	"package": "dev.rehan.passthrough.mixin",
 	"compatibilityLevel": "JAVA_25",
-	"mixins": ["LevelMixin", "MobAccessor", "MobMixin", "PlayerMixin", "PortalMixin", "ProjectileMixin", "ProxyMixin", "ServerExplosionMixin", "ServerPlayerMixin", "BarrierBlockMixin"],
+	"mixins": ["LevelMixin", "MobAccessor", "MobMixin", "PlayerMixin", "PortalMixin", "ProjectileMixin", "ProxyMixin", "ServerExplosionMixin", "ServerPlayerMixin", "BarrierBlockMixin", "DragonFireballMixin"],
 	"injectors": { "defaultRequire": 1 }
 }
