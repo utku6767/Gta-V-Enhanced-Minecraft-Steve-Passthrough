@@ -432,8 +432,13 @@ namespace
 			g_gunFit.heldHash = want;
 			natives::SetEntityCollision(g_gunFit.held, FALSE, FALSE);
 		}
-		const Vector3 r = natives::GetGameplayCamRot(2);
-		const float d2r = 3.14159265f / 180.0f, h = r.z * d2r, pt = r.x * d2r;
+		const bool aiming = natives::IsPlayerFreeAiming(natives::PlayerId()) ||
+		                    natives::IsDisabledControlPressed(0, 24) ||
+		                    natives::IsControlPressed(0, 24);
+		const Vector3 r = natives::GetFinalRenderedCamRot(2);
+		const float h_deg = aiming ? r.z : natives::GetEntityHeading(ped);
+		const float pt_deg = aiming ? r.x : 0.0f;
+		const float d2r = 3.14159265f / 180.0f, h = h_deg * d2r, pt = pt_deg * d2r;
 		const float fx = -std::sin(h) * std::cos(pt), fy = std::cos(h) * std::cos(pt), fz = std::sin(pt);
 		const float rx = std::cos(h), ry = std::sin(h);
 		const float feetZ = p.z - 1.0f;
@@ -441,7 +446,7 @@ namespace
 		const float y = p.y + ry * g_gunFit.right + fy * g_gunFit.fwd;
 		const float z = feetZ + g_gunFit.up + fz * g_gunFit.fwd;
 		natives::SetEntityCoordsNoOffset(g_gunFit.held, x, y, z);
-		natives::SetEntityRotation(g_gunFit.held, g_gunFit.pitch, g_gunFit.roll + r.x * g_gunFit.tilt, r.z + g_gunFit.yaw);
+		natives::SetEntityRotation(g_gunFit.held, g_gunFit.pitch, g_gunFit.roll + pt_deg * g_gunFit.tilt, h_deg + g_gunFit.yaw);
 	}
 
 	static Vector3 g_crosshairTarget = {};
@@ -2286,7 +2291,7 @@ namespace
 			natives::Notify(g_pause_mode ? "Pause mode ~g~ON~s~ (E: Inventory, T: Chat, F: Swap)" : "Pause mode ~r~OFF~s~ (GTA controls)");
 		}
 		const bool on = g_enabled && g_ws.connected();
-		const bool hidden = natives::IsPauseMenuActive() || natives::IsScreenFadedOut() || natives::IsCutsceneActive() || natives::IsPlayerSwitchInProgress();
+		const bool hidden = natives::IsPauseMenuActive() || natives::IsScreenFadedOut() || natives::IsPlayerSwitchInProgress();
 		compositor::set_active(on && !hidden);
 		if (!on)
 		{
@@ -2483,6 +2488,7 @@ namespace
 		gun_model_tick(ped, gun && !natives::IsPauseMenuActive());
 		if (!g_chat_mode && !g_inv_mode)
 		{
+			forward_button(44, "drop");
 			if (natives::IsDisabledControlJustPressed(0, 14) || natives::IsDisabledControlJustPressed(0, 16))
 				g_ws.send("{\"t\":\"scroll\",\"d\":-1}");
 			if (natives::IsDisabledControlJustPressed(0, 15) || natives::IsDisabledControlJustPressed(0, 17))

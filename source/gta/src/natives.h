@@ -34,6 +34,8 @@ namespace natives
 	}
 	inline BOOL IsDisabledControlJustPressed(int group, int control) { return invoke<BOOL>(0x91AEF906BCA88877, group, control); }
 	inline BOOL IsDisabledControlJustReleased(int group, int control) { return invoke<BOOL>(0x305C8DCD79DA8B0F, group, control); }
+	inline BOOL IsDisabledControlPressed(int group, int control) { return invoke<BOOL>(0xE2587F8CBBD87B1D, group, control); }
+	inline BOOL IsControlPressed(int group, int control) { return invoke<BOOL>(0xF3A21BCD95725A4A, group, control); }
 
 	inline void HideHudAndRadarThisFrame() { invoke<Void>(0x719FF505F097FD20); }
 	inline void TheFeedHideThisFrame() { invoke<Void>(0x25F87B30C382FCA7); }
