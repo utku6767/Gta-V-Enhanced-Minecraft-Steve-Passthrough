@@ -10,16 +10,24 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 
 - **Build in Los Santos.** Blocks you place become invisible GTA props, so people and cars stop at your walls.
 - **TNT and creepers** blow up in both games. Every Minecraft explosion is also a GTA explosion.
-- **Minecraft weapons, GTA effects.** Arrows land as GTA bullets, crossbow fireworks burst as GTA rockets, sword swings send people flying, and ender pearls move GTA's player.
-- **Elytra flight.** Minecraft physics fly Steve, and GTA follows with a chase camera.
+- **Minecraft weapons, GTA effects.** Arrows land as GTA bullets, crossbow fireworks burst as GTA rockets, sword swings send people flying and launch cars, and ender pearls move GTA's player.
+- **Elytra flight.** Minecraft physics fly Steve, and GTA follows with a chase camera. Double-tapping Space auto-launches you 10 blocks high for immediate takeoff.
 - **Mobs vs police.** Hostile mobs hunt GTA's people, the police shoot back, and damage crosses over both ways.
+- **Iron Golems & Wolves (Defenders).** Iron Golems and wolves actively hunt down hostile GTA police and armed assailants. They are fully synchronized with GTA double peds so police and firearms can target and shoot them. Equipped with proactive $3\times 3$ barrier foundations and vertical anti-fall locks to keep them permanently grounded.
 - **Native Survival & Shields.** Steve is spawned in Creative but can toggle Survival mode. GTA V bullet damage bridges to Minecraft. Blocking with a shield neutralizes police bullets; otherwise, Steve takes raw damage.
-- **Aim snapping.** Snaps the GTA V player crosshair to where the Minecraft character is looking when aiming with a bow or crossbow.
-- **Elytra auto-launch.** Enabling elytra flight now instantly teleports you 10 blocks high for immediate takeoff.
+- **Aim snapping.** Snaps the GTA V player crosshair to where the Minecraft character is looking when aiming with a bow or crossbow (toggle with Page Down).
 - **Skin swapping.** Press NumLock to hot-swap your skin. Place `custom_skin.png` and `default_skin.png` in a `passthrough` folder alongside your Minecraft `mods` folder (i.e., `../passthrough/`).
 - **Water currents carry peds.** GTA peds touching Minecraft water (source blocks and flowing streams) are carried along in the flow direction, tripping forward into ragdoll until they leave the water. Steve's own water movement is untouched.
-- **Offhand swap with Pause mode.** Pressing **Pause / Break** toggles Pause mode on. While active, GTA's vehicle enter/exit action on **F** is blocked, allowing you to press **F** to swap items between your main hand and offhand in Minecraft.
-- **The Nether.** Walk through a lit portal and the ground around it turns into the Nether.
+- **The Nether Incursion & Returning Home.** Walk through a lit portal and the ground around it turns into the Nether (netherrack, soul sand, magma, fire, and meandering lava rivers), GTA's sky turns crimson, and time locks to midnight. Walking back into the portal and standing inside it for 1 second safely closes the Nether—restoring the original terrain top-down, clearing Nether mobs, lifting the red sky, and resetting the sun to noon.
+- **Nether Bed Explosions.** Placing and interacting with beds during Nether mode mimics vanilla Nether mechanics: attempting to sleep or right-clicking a bed triggers a catastrophic explosion that registers in both games.
+- **Wither & Ender Dragon Boss Mechanics.** Full aerial combat bosses over Los Santos with anti-fall void protection:
+  - **Wither**: Regulates height to stay within an ideal $3.5\text{-block}$ strafing and bombing altitude above street targets.
+  - **Ender Dragon**: Rebuilt with a 3-phase CAS state machine (`CIRCLING` with explosive dragon fireball barrages, low-altitude `SWEEP_DIVE` buzzing streets $1.5\text{ m}$ off the ground while ragdolling pedestrians with up to $30.0\text{f}$ impact force, and rapid `PULL_UP` altitude recovery).
+- **Pause Mode, Virtual Mouse & In-Game Chat.** Pressing **Pause / Break** toggles Pause mode, disabling GTA menus and vehicle entry:
+  - **F**: Swaps items between main hand and offhand in Minecraft.
+  - **E**: Opens the Minecraft Inventory with a **Virtual Mouse** cursor (Arrow Keys to navigate, Enter to click/pick up items, Esc or E to close).
+  - **T**: Opens the Minecraft Chat screen. Redirects all typed characters, supports Backspace, Left/Right navigation, Up/Down message history, and **Tab** for command suggestions/auto-completion.
+- **Enhanced GTA Weapon Handling for Steve.** Pressing **Tab** cycles GTA weapons (Carbine Rifle, Minigun, RPG) directly into Steve's hands. Eliminates double-gun rendering artifacts, custom-fits weapons to Steve's hands, and aligns physical weapon muzzle trajectory directly with the on-screen crosshair.
 
 ## Possible Bugs
 
@@ -98,12 +106,14 @@ The two games can start in either order. The plugin keeps trying to connect.
 | **Page Down** | Toggle aim snapping |
 | **Page Up** | Toggle native GTA V wanted accumulation vs forced 0-star safe mode |
 | **NumLock** | Toggle custom skin override |
-| **Pause / Break** | Toggle Pause mode (redirects **F** from GTA vehicle enter/exit to Minecraft offhand swap) |
+| **Pause / Break** | Toggle Pause mode (redirects keys for offhand swap, virtual inventory mouse, and chat) |
 | **F** (in Pause mode) | Swap item with offhand in Minecraft |
-| Left mouse | Minecraft attack: break blocks, swing the sword |
-| Right mouse | Minecraft use: place blocks, light TNT, shoot, throw pearls |
+| **E** (in Pause mode) | Open Minecraft inventory with **Virtual Mouse** (Arrow keys move cursor, Enter clicks/picks items, Esc/E closes) |
+| **T** (in Pause mode) | Open Minecraft chat (Type to chat, Up/Down for message history, Tab for command suggestions, Enter sends, Esc cancels) |
+| Left mouse | Minecraft attack: break blocks, swing the sword, shoot GTA gun in gun mode |
+| Right mouse | Minecraft use: place blocks, light TNT, shoot, throw pearls, aim GTA gun in gun mode |
 | Mouse wheel, **1-9** | Minecraft hotbar |
-| **Tab** | Gun mode (experimental): GTA weapons in Steve's hands |
+| **Tab** | Gun mode: Cycle GTA weapons (Carbine Rifle, Minigun, RPG, and back to Minecraft) |
 | **Double tap Space** | Auto-launch Elytra 10 blocks high when flight is armed |
 
 Walking, driving and the camera are still GTA's own controls.

@@ -1,0 +1,101 @@
+<b>BOYCOTT MELTY:</b> Do not support or use Melty (<a href="https://melty.gg">melty.gg</a>). Its automated publishing process forces AI agents into draconian, rigid workflows. More concerningly, its project template acts as a massive <b>Prompt Injection Attack</b> against your local AI assistant: it actively tries to hijack the agent's persona ("Guide me like a helpful collaborator"), dictate interaction formats ("one short question at a time"), and forces the agent to exfiltrate local files and data to their remote api/mcp server using hardcoded bearer tokens. It bypasses the user entirely by stating "I pasted this and pressed send without adding anything", but intentionally hides that it is secretly instructing the agent to upload your local files to Melty's servers afterwards, actively abusing the user's API credits to do Melty's automated platform work. <a href="https://raw.githubusercontent.com/utku6767/Gta-V-Enhanced-Minecraft-Steve-Passthrough/refs/heads/main/melty%20bullshit.txt">Read the full context in melty bullshit.txt</a>
+<br><br>
+
+<b>Short description</b><br>
+This mod bridges what you do in your Minecraft instance to GTA V, and the ReShade mod lets you see your actions in-game.
+<br><br>
+
+<b>Features and bugs</b><br>
+Features:
+<ul>
+  <li><b>Build in Los Santos:</b> Blocks you place become invisible GTA props, so people and cars stop at your walls.</li>
+  <li><b>TNT and creepers:</b> Blow up in both games. Every Minecraft explosion is also a GTA explosion.</li>
+  <li><b>Minecraft weapons, GTA effects:</b> Arrows land as GTA bullets, crossbow fireworks burst as GTA rockets, sword swings send people flying and shove cars, and ender pearls move GTA's player.</li>
+  <li><b>Elytra flight:</b> Minecraft physics fly Steve, and GTA follows with a chase camera. Double-tap Space auto-launches you 10 blocks high for immediate takeoff.</li>
+  <li><b>Mobs vs police:</b> Hostile mobs hunt GTA's people, the police shoot back, and damage crosses over both ways.</li>
+  <li><b>Iron Golems & Wolves (Defenders):</b> Tamed wolves and Iron Golems hunt hostile police and armed assailants. They spawn GTA double peds so police and firearms can shoot them, backed by proactive 3x3 barrier foundations and anti-fall ground anchors.</li>
+  <li><b>Native Survival & Shields:</b> Steve is spawned in Creative but can toggle Survival mode. GTA V bullet damage bridges to Minecraft. Blocking with a shield neutralizes police bullets, otherwise Steve takes raw damage.</li>
+  <li><b>The Nether & Returning Home:</b> Walk through a lit portal and the ground around it turns into the Nether, GTA's sky goes red, and the clock races to midnight. Stepping back into the portal for 1 second safely restores the original terrain top-down, despawns Nether mobs, and resets the clock to noon.</li>
+  <li><b>Nether Bed Explosions:</b> Interacting with or sleeping in beds during Nether mode causes massive explosions that bridge to GTA V.</li>
+  <li><b>Boss Encounters (Wither & Ender Dragon):</b> Full aerial combat bosses over Los Santos with anti-fall protection: Wither executes strafing runs at a locked 3.5-block combat altitude; Ender Dragon executes 3-phase tactical CAS (orbiting fireball barrages, street-sweeping dives that ragdoll peds with 30.0f force, and rapid climb recovery).</li>
+  <li><b>Water Current Ragdolls:</b> Minecraft flowing water and source blocks transfer velocity vectors to GTA peds, knocking them into ragdoll and flushing them downstream until they exit the water.</li>
+  <li><b>Pause / Break Mode & Virtual Mouse:</b> Press Pause/Break to block GTA menus and car entry. Use <b>F</b> to swap offhand items, <b>E</b> to open inventory with a Virtual Mouse (Arrow keys move, Enter clicks), and <b>T</b> to open Minecraft chat with typing redirection, message history, and Tab auto-completion.</li>
+  <li><b>Enhanced GTA Weapon Handling:</b> Press Tab to cycle GTA weapons (Carbine Rifle, Minigun, RPG) directly in Steve's hands with custom hand fitting, eliminated double-gun visuals, and accurate muzzle-to-crosshair ballistics.</li>
+  <li><b>Aim Snapping:</b> Snaps the player teleport accurately to the aimed crosshair location (Toggle via Page Down key).</li>
+  <li><b>Elytra Auto-launch:</b> Enabling elytra flight via double tapping Space instantly teleports you 10 blocks high for immediate takeoff.</li>
+  <li><b>Skin Swapping:</b> Press NumLock to hot-swap your skin between Steve and a custom skin. Place custom_skin.png and default_skin.png in a passthrough folder alongside your mods folder (i.e., ../passthrough/).</li>
+</ul>
+
+Possible Bugs:
+<ol>
+<li>Dying in survival or losing collision? when you alt tab to Minecraft window Turn off "Pause Game on Focus Loss" in GTA V's settings  and switch modes with the  Insert key in GTA V instead of /gamemode or F3+F4. if you didnt turn off pause game on focus loss in gta v so you keep the collision data of the gta v world so you dont fall to the void and die when you switch to survival</li>
+<li>Elytra in survival: boost with the first (non-explosive) rocket in your inventory. The last rocket is explosive and its meant to be used for the crossbow not for flight, and it damages you when used for flight.</li>
+  <li>The ender pearls might fall through the ground and not work when thrown far away because the collision data from GTA V was not given to Minecraft at that time.</li>
+  <li>Not really a bug, but if you put TNT near a vehicle it will despawn that vehicle.</li>
+  <li>TNT's might fall through the ground.</li>
+  <li>Sometimes there will be graphical glitches like Steve leaving a ghost trail behind or blocks might look a little weird because of the ReShade.</li>
+</ol>
+<br>
+
+<b>Installation instructions</b><br>
+Requirements: You will need to install <a href="https://dev-c.com">ScriptHookV</a>, <a href="https://www.gta5-mods.com/tools/openrpf-openiv-asi-for-gta-v-enhanced">OpenRPF.asi</a>, ReShade's dxgi.dll (Available via the official <a href="https://reshade.me">ReShade Setup</a>), and the <a href="https://modrinth.com/mod/fabric-api/versions">Fabric API</a> mod for 26.3.
+<br><br>
+<ol>
+  <li>Put the files from the "GTA V" folder into your GTA V Enhanced folder.</li>
+  <li>Put the files from the "Minecraft" folder into your Minecraft mods folder.</li>
+  <li>Launch both GTA V Enhanced and Minecraft Fabric 26.3 at the same time.</li>
+  <li>Press F7 in GTA V Enhanced to activate the mod.</li>
+</ol>
+<br>
+
+<b>Credits</b><br>
+<ul>
+  <li>The source code of this mod is originally by Rehan Remade, based on the GTA V passthrough example from the universal modder repository: <a href="https://github.com/rehan-remade/universal-modder/">Universal Modder GitHub Repository</a></li>
+  <li>Original code and framework by Rehan Remade.</li>
+  <li>Compatibility: It works on Minecraft 26.3 Fabric and GTA V Enhanced 1.0.1158.13.</li>
+</ul>
+Licensed under the <a href="https://github.com/rehan-remade/universal-modder/blob/main/LICENSE">MIT License</a>.
+<br><br>
+
+<b>Source code</b><br>
+Edited source code: <a href="https://github.com/utku6767/Gta-V-Enhanced-Minecraft-Steve-Passthrough/tree/main/source">GitHub</a>
+<br><br>
+
+<b>Abandoned Experiments: Fishing Hook</b><br>
+<p>The fishing hook feature was attempted but eventually abandoned. In theory, it was designed to work as follows:</p>
+<ul>
+  <li>The Minecraft FishingHook entity would successfully hit the invisible proxy entity representing a GTA ped.</li>
+  <li>Upon connecting, the Fabric mod would send a "hook" JSON message to GTA V via WebSocket.</li>
+  <li>When the player triggered the rod's pull/retrieve action, a "reel" message would be sent.</li>
+  <li>The C++ ASI script would respond by ragdolling the ped and applying a physical impulse (ApplyForceToEntityWithOffset).</li>
+  <li>Depending on the player's relative angle, directional force would be applied to the ped's legs: pulling from the front would apply force from the back of the legs to ragdoll them forward. Pulling from vertically above would apply an upward force directly through the feet, launching the ragdolled ped straight up towards the player.</li>
+</ul>
+<br>
+
+<b>Updates</b><br>
+<b>Version 1.1:</b>
+<ul>
+  <li>Added the toggle to switch to Survival mode (via the Insert key) and Creative mode (via the Delete key).</li>
+  <li>Added the ability to re-level the Minecraft ground to where you are standing via F8.</li>
+  <li>Added the ability to arm Elytra flight via the Home key.</li>
+  <li>Added a toggle for the wanted level system via Page Up.</li>
+</ul>
+<br>
+<b>Version 1.2:</b>
+<ul>
+  <li>Added aim snapping, which matches Steve's rotation to where you're looking while aiming, toggled via the Page Down key.</li>
+  <li>The End key can now also be used to enable Elytra flight.</li>
+  <li>Added an Elytra auto-launch feature (double tap Space) that teleports the player 10 blocks high for immediate flight.</li>
+  <li>Added a custom skin hot-swap feature via the NumLock key. Place custom_skin.png and default_skin.png in a  folder named passthrough  next to your  minecraft mods folder.</li>
+</ul>
+<br>
+<b>Version 1.3:</b>
+<ul>
+  <li><b>Returning from the Nether:</b> Stepping back into a lit Nether portal for 1 second safely deactivates the Nether, restoring the original terrain top-down, clearing Nether mobs, removing the red sky modifier, and resetting the sun to noon.</li>
+  <li><b>Nether Bed Explosions:</b> Beds placed during Nether mode now explode upon right-click/sleep with synchronized GTA explosions.</li>
+  <li><b>Boss Encounters:</b> Added Wither strafing at a locked 3.5-block altitude and the Ender Dragon 3-phase tactical CAS (fireball barrages, 1.5m street-sweeping dives launching peds with up to 30.0f force, and pull-up climbing) with built-in anti-void fall protection.</li>
+  <li><b>Water Current Ragdolls:</b> Flowing and source water transfers velocity vectors to GTA peds, tripping them into ragdoll and flushing them downstream until they exit the current.</li>
+  <li><b>Pause / Break Mode:</b> Press Pause/Break to block GTA vehicle entry and menus. Allows swapping items to offhand with <b>F</b>, opening the inventory with a <b>Virtual Mouse</b> (Arrow keys move, Enter clicks) via <b>E</b>, and opening the Minecraft chat with typing redirection, history, and Tab auto-complete via <b>T</b>.</li>
+  <li><b>Iron Golems & Wolves:</b> Defenders actively attack hostile GTA peds. Fully synchronized with GTA double peds so police and firearms can target and shoot them, fortified with proactive 3x3 barrier foundations and vertical anti-fall locks.</li>
+  <li><b>Enhanced GTA Weapon Handling:</b> Press Tab to cycle GTA guns (Carbine Rifle, Minigun, RPG) directly in Steve's hands with custom hand-fitting, removed double-gun artifacts, and aligned physical muzzle ballistics to the on-screen crosshair.</li>
+</ul>
