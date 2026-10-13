@@ -998,8 +998,12 @@ namespace
 				const float dx = o.x - me.x, dy = o.y - me.y;
 				if (dx * dx + dy * dy > 60.0f * 60.0f)
 					continue;
+				const bool isCop = (type == 6 || type == 27 || type == 29);
+				const bool hasWanted = g_police || (natives::GetPlayerWantedLevel(natives::PlayerId()) > 0);
+				const bool inCombat = natives::IsPedInCombat(q, player) || (natives::GetCombatTarget(q) == player);
+				const int hostile = ((isCop && hasWanted) || inCombat) ? 1 : 0;
 				char e[96];
-				snprintf(e, sizeof(e), "%s[%d,%.3f,%.3f,%.3f]", list.empty() ? "" : ",", q, o.x, o.z - 1.0f + g_yOffset, -o.y);
+				snprintf(e, sizeof(e), "%s[%d,%.3f,%.3f,%.3f,%d]", list.empty() ? "" : ",", q, o.x, o.z - 1.0f + g_yOffset, -o.y, hostile);
 				list += e;
 				g_pedsSent.insert(q);
 			}
@@ -2051,7 +2055,12 @@ namespace
 			if (json_value(message, "on") != nullptr && std::strncmp(json_value(message, "on"), "true", 4) == 0)
 				hell_start(message);
 			else
+			{
 				hell_stop();
+				for (auto &[id, m] : g_mobs)
+					double_delete(m);
+				g_mobs.clear();
+			}
 			return;
 		}
 		if (type == "mobhit")
@@ -2427,6 +2436,7 @@ namespace
 		natives::InvalidateIdleCam();
 		natives::InvalidateCinematicVehicleIdleMode();
 		natives::HideHudAndRadarThisFrame();
+		natives::ShowHudComponentThisFrame(1); // HUD_WANTED_STARS
 		// natives::TheFeedHideThisFrame();
 		natives::HideHelpTextThisFrame();
 		if (!g_playerHidden)

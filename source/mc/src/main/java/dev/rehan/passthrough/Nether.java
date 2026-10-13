@@ -44,6 +44,8 @@ public final class Nether {
 	private static BlockPos pendingPortal;
 	private static boolean active;
 	private static boolean playerInPortal;
+	private static boolean exitedSinceActive;
+	private static int inPortalTicks;
 	private static int ticks;
 	/** Portal interior: bottom row y, extent along the plane, and the plane's axis (X: spans x, faces ±z). */
 	private static int bottomY, topY, minA, maxA, planeC;
@@ -110,8 +112,24 @@ public final class Nether {
 				Passthrough.events.accept("{\"t\":\"inportal\",\"on\":" + playerInPortal + "}");
 			}
 
-			if (in != null && !active && pendingPortal == null) {
-				pendingPortal = in;
+			if (active) {
+				if (in == null) {
+					exitedSinceActive = true;
+					inPortalTicks = 0;
+				} else if (exitedSinceActive) {
+					inPortalTicks++;
+					if (inPortalTicks >= 20) {
+						close(level);
+						exitedSinceActive = false;
+						inPortalTicks = 0;
+					}
+				}
+			} else {
+				exitedSinceActive = false;
+				inPortalTicks = 0;
+				if (in != null && pendingPortal == null) {
+					pendingPortal = in;
+				}
 			}
 		}
 
@@ -167,6 +185,8 @@ public final class Nether {
 		centerX = (minX + maxX + 1) / 2.0;
 		centerZ = (minZ + maxZ + 1) / 2.0;
 		active = true;
+		exitedSinceActive = false;
+		inPortalTicks = 0;
 		ticks = 0;
 		planSpread();
 		Passthrough.LOG.info("nether: portal at {} {} {} axis {}", centerX, bottomY, centerZ, axis);
@@ -505,17 +525,20 @@ public final class Nether {
 			columns.clear();
 			active = false;
 			pendingPortal = null;
+			exitedSinceActive = false;
+			inPortalTicks = 0;
 			MobWar.discardFighters(level);
 			if (wasOpen) {
 				WorldBridge.command("time set noon");
 			}
 
+			Passthrough.events.accept("{\"t\":\"inportal\",\"on\":false}");
 			Passthrough.events.accept("{\"t\":\"nether\",\"on\":false}");
 			Passthrough.LOG.info("nether: closed");
 		}
 	}
 
-	static boolean active() {
+	public static boolean active() {
 		return active;
 	}
 

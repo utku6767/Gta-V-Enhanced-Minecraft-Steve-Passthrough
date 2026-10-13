@@ -47,6 +47,7 @@ import net.minecraft.world.entity.projectile.Projectile;
  */
 public final class MobWar {
 	public static final String PROXY_TAG = "gta_proxy";
+	public static final String PROXY_HOSTILE_TAG = "gta_hostile";
 	/** Mobs hunt proxies this far away (blocks). */
 	private static final double FOLLOW_RANGE = 48.0;
 	/** Host people further than this from the player aren't mirrored, nor mobs reported (blocks). */
@@ -108,6 +109,21 @@ public final class MobWar {
 		return e instanceof Villager && (e.isInvisible() || e.entityTags().contains(PROXY_TAG));
 	}
 
+	public static boolean isHostileProxy(final Entity e) {
+		return isProxy(e) && e.entityTags().contains(PROXY_HOSTILE_TAG);
+	}
+
+	public static boolean isNetherMob(final Entity e) {
+		return e instanceof net.minecraft.world.entity.monster.Ghast
+			|| e instanceof net.minecraft.world.entity.monster.Blaze
+			|| e instanceof net.minecraft.world.entity.monster.cubemob.MagmaCube
+			|| e instanceof net.minecraft.world.entity.monster.skeleton.WitherSkeleton
+			|| e instanceof net.minecraft.world.entity.monster.zombie.ZombifiedPiglin
+			|| e instanceof net.minecraft.world.entity.monster.piglin.AbstractPiglin
+			|| e instanceof net.minecraft.world.entity.monster.hoglin.Hoglin
+			|| e instanceof net.minecraft.world.entity.monster.Strider;
+	}
+
 	/** Mobs that join the fight: hostile, goal-driven ones. */
 	private static boolean fighter(final Entity e) {
 		return e instanceof Mob && e instanceof Enemy && !isProxy(e) && !BRAIN_MOBS.contains(BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).getPath());
@@ -130,6 +146,19 @@ public final class MobWar {
 	static void onEntityLoad(final Entity e, final ServerLevel level) {
 		if (e instanceof Villager v && v.entityTags().contains(PROXY_TAG) && !proxies.containsValue(v)) {
 			v.discard();
+			return;
+		}
+
+		if (e instanceof net.minecraft.world.entity.animal.golem.IronGolem || e instanceof net.minecraft.world.entity.animal.wolf.Wolf) {
+			Mob mob = (Mob) e;
+			GoalSelector targets = ((MobAccessor) mob).passthrough$targetSelector();
+			if (targets.getAvailableGoals().stream().noneMatch(w -> w.getGoal() instanceof HostilePedTargetGoal)) {
+				targets.addGoal(1, new HostilePedTargetGoal(mob));
+			}
+			AttributeInstance range = mob.getAttribute(Attributes.FOLLOW_RANGE);
+			if (range != null && range.getBaseValue() < FOLLOW_RANGE) {
+				range.setBaseValue(FOLLOW_RANGE);
+			}
 			return;
 		}
 
@@ -171,6 +200,7 @@ public final class MobWar {
 	static void tick(final MinecraftServer s) {
 		ServerLevel level = s.overworld();
 		syncProxies(level);
+		updateDefenders(level);
 		applyDamage(level);
 		protectBosses(level);
 		if (Passthrough.active) {
@@ -396,9 +426,11 @@ public final class MobWar {
 		}
 
 		Map<Integer, Boolean> seen = new HashMap<>();
-		for (int i = 0; i + 3 < p.length; i += 4) {
+		int stride = (p.length % 5 == 0) ? 5 : 4;
+		for (int i = 0; i + (stride - 1) < p.length; i += stride) {
 			int handle = (int) p[i];
 			double x = p[i + 1], y = p[i + 2], z = p[i + 3];
+			boolean hostile = stride >= 5 && p[i + 4] > 0.5;
 			seen.put(handle, true);
 			Villager v = proxies.get(handle);
 			if (v == null || v.isRemoved()) {
@@ -413,6 +445,9 @@ public final class MobWar {
 				v.setNoGravity(true);
 				v.setSilent(true);
 				v.addTag(PROXY_TAG);
+				if (hostile) {
+					v.addTag(PROXY_HOSTILE_TAG);
+				}
 				v.snapTo(x, y, z, 0.0F, 0.0F);
 				proxies.put(handle, v); // before adding: the load event must not take it for a stale one
 				if (!level.addFreshEntity(v)) {
@@ -423,6 +458,11 @@ public final class MobWar {
 				handleOf.put(v.getId(), handle);
 			} else {
 				v.setPos(x, y, z);
+				if (hostile) {
+					v.addTag(PROXY_HOSTILE_TAG);
+				} else {
+					v.removeTag(PROXY_HOSTILE_TAG);
+				}
 			}
 
 			missingTicks.remove(handle);
@@ -480,6 +520,42 @@ public final class MobWar {
 			}
 		}
 
+		return best;
+	}
+
+	private static void updateDefenders(final ServerLevel level) {
+		for (Entity e : level.getAllEntities()) {
+			if (e instanceof net.minecraft.world.entity.animal.golem.IronGolem golem && golem.isAlive()) {
+				checkDefenderTarget(golem, 32.0);
+			} else if (e instanceof net.minecraft.world.entity.animal.wolf.Wolf wolf && wolf.isAlive() && wolf.isTame() && !wolf.isOrderedToSit()) {
+				checkDefenderTarget(wolf, 24.0);
+			}
+		}
+	}
+
+	private static void checkDefenderTarget(final Mob defender, final double range) {
+		LivingEntity target = defender.getTarget();
+		if (target != null && target.isAlive() && isHostileProxy(target)) {
+			return;
+		}
+		LivingEntity nearest = nearestHostileProxy(defender, range);
+		if (nearest != null) {
+			defender.setTarget(nearest);
+		}
+	}
+
+	private static LivingEntity nearestHostileProxy(final Mob mob, final double maxDist) {
+		LivingEntity best = null;
+		double bestD = maxDist * maxDist;
+		for (Villager v : proxies.values()) {
+			if (v != null && !v.isRemoved() && isHostileProxy(v)) {
+				double dd = v.distanceToSqr(mob);
+				if (dd < bestD) {
+					best = v;
+					bestD = dd;
+				}
+			}
+		}
 		return best;
 	}
 
@@ -659,7 +735,7 @@ public final class MobWar {
 	static void discardFighters(final ServerLevel level) {
 		List<Entity> all = new ArrayList<>();
 		level.getAllEntities().forEach(all::add);
-		all.stream().filter(e -> fighter(e) || isProxy(e)).forEach(Entity::discard);
+		all.stream().filter(e -> fighter(e) || isProxy(e) || isNetherMob(e)).forEach(Entity::discard);
 	}
 
 	/** The host went away: nobody left to hunt. */

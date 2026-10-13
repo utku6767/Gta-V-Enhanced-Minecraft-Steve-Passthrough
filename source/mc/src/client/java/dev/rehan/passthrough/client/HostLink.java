@@ -79,11 +79,12 @@ public final class HostLink extends WebSocketServer {
 				}
 				case "peds" -> {
 					JsonArray list = m.getAsJsonArray("p");
-					double[] flat = new double[list.size() * 4];
+					double[] flat = new double[list.size() * 5];
 					for (int i = 0; i < list.size(); i++) {
 						JsonArray e = list.get(i).getAsJsonArray();
-						for (int k = 0; k < 4; k++) {
-							flat[i * 4 + k] = e.get(k).getAsDouble();
+						int len = e.size();
+						for (int k = 0; k < 5; k++) {
+							flat[i * 5 + k] = k < len ? e.get(k).getAsDouble() : 0.0;
 						}
 					}
 
