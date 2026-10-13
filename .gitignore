@@ -1,6 +1,5 @@
 # Build artifacts
 *.html
-!g.html
 *.zip
 temp/
 build/
