@@ -146,8 +146,7 @@ namespace natives
 	inline void SetPedCombatMovement(Ped p, int movement) { invoke<Void>(0x4D9CA1009AFBD057, p, movement); }
 	inline void SetPedConfigFlag(Ped p, int flag, BOOL v) { invoke<Void>(0x1913FE4CBF41C463, p, flag, v); }
 	inline void SetPedArmour(Ped p, int amount) { invoke<Void>(0xCEA04D83135264CC, p, amount); }
-	inline BOOL IsPedInCombat(Ped p, Ped target) { return invoke<BOOL>(0xF80842D5233237B9, p, target); }
-	inline Ped GetCombatTarget(Ped p) { return invoke<Ped>(0x32DDE4747AE49E69, p); }
+	inline BOOL IsPedInCombat(Ped p, Ped target) { return invoke<BOOL>(0x4859F1FC66A6278E, p, target); }
 	inline void DeletePed(Ped *p) { invoke<Void>(0x9614299DCB53E54B, p); }
 	inline void SetPedSeeingRange(Ped p, float r) { invoke<Void>(0xF29CF591C4BF6CEE, p, r); }
 	inline void SetVehicleSiren(Vehicle v, BOOL on) { invoke<Void>(0xF4924635A19EB37D, v, on); }

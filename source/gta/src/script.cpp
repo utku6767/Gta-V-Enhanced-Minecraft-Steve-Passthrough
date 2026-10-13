@@ -1000,7 +1000,7 @@ namespace
 					continue;
 				const bool isCop = (type == 6 || type == 27 || type == 29);
 				const bool hasWanted = g_police || (natives::GetPlayerWantedLevel(natives::PlayerId()) > 0);
-				const bool inCombat = natives::IsPedInCombat(q, player) || (natives::GetCombatTarget(q) == player);
+				const bool inCombat = natives::IsPedInCombat(q, player);
 				const int hostile = ((isCop && hasWanted) || inCombat) ? 1 : 0;
 				char e[96];
 				snprintf(e, sizeof(e), "%s[%d,%.3f,%.3f,%.3f,%d]", list.empty() ? "" : ",", q, o.x, o.z - 1.0f + g_yOffset, -o.y, hostile);
