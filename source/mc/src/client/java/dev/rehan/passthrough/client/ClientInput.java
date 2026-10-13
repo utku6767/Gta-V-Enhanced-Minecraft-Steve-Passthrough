@@ -91,30 +91,91 @@ public final class ClientInput {
 				}
 			}
 			case "chat_open" -> {
-				minecraft.gui.setScreen(new net.minecraft.client.gui.screens.ChatScreen("", false));
+				net.minecraft.client.gui.screens.ChatScreen chat = new net.minecraft.client.gui.screens.ChatScreen("", false);
+				minecraft.gui.setScreen(chat);
+				if (chat instanceof dev.rehan.passthrough.client.mixin.ChatScreenAccessor acc) {
+					net.minecraft.client.gui.components.EditBox input = acc.passthrough$getInput();
+					if (input != null) {
+						chat.setFocused(input);
+						input.setFocused(true);
+					}
+				}
 			}
 			case "chat_char" -> {
 				if (minecraft.gui.screen() != null && m.has("c")) {
 					int codepoint = m.get("c").getAsInt();
+					if (minecraft.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen chat
+						&& chat instanceof dev.rehan.passthrough.client.mixin.ChatScreenAccessor acc) {
+						net.minecraft.client.gui.components.EditBox input = acc.passthrough$getInput();
+						if (input != null) {
+							chat.setFocused(input);
+							input.setFocused(true);
+						}
+					}
 					minecraft.gui.screen().charTyped(new net.minecraft.client.input.CharacterEvent(codepoint));
 				}
 			}
 			case "chat_key" -> {
 				if (minecraft.gui.screen() != null && m.has("k")) {
 					String k = m.get("k").getAsString();
-					switch (k) {
-						case "enter" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(40, 13, 0));
-						case "escape" -> {
-							minecraft.gui.screen().onClose();
-							minecraft.gui.setScreen(null);
+					if (minecraft.gui.screen() instanceof net.minecraft.client.gui.screens.ChatScreen chatScreen
+						&& chatScreen instanceof dev.rehan.passthrough.client.mixin.ChatScreenAccessor acc) {
+						net.minecraft.client.gui.components.EditBox input = acc.passthrough$getInput();
+						net.minecraft.client.gui.components.CommandSuggestions suggestions = acc.passthrough$getCommandSuggestions();
+						if (input != null) {
+							chatScreen.setFocused(input);
+							input.setFocused(true);
 						}
-						case "backspace" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(42, 8, 0));
-						case "tab" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(43, 9, 0));
-						case "left" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(80, 1073741904, 0));
-						case "right" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(79, 1073741903, 0));
-						case "up" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(82, 1073741899, 0));
-						case "down" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(81, 1073741900, 0));
-						default -> {
+						switch (k) {
+							case "enter" -> chatScreen.keyPressed(new net.minecraft.client.input.KeyEvent(40, 13, 0));
+							case "escape" -> {
+								chatScreen.onClose();
+								minecraft.gui.setScreen(null);
+							}
+							case "backspace" -> chatScreen.keyPressed(new net.minecraft.client.input.KeyEvent(42, 8, 0));
+							case "tab" -> {
+								net.minecraft.client.input.KeyEvent tabEvt = new net.minecraft.client.input.KeyEvent(43, 9, 0);
+								if (suggestions != null) {
+									if (!suggestions.keyPressed(tabEvt)) {
+										suggestions.showSuggestions(true);
+										suggestions.keyPressed(tabEvt);
+									}
+								} else {
+									chatScreen.keyPressed(tabEvt);
+								}
+							}
+							case "left" -> chatScreen.keyPressed(new net.minecraft.client.input.KeyEvent(80, 1073741904, 0));
+							case "right" -> chatScreen.keyPressed(new net.minecraft.client.input.KeyEvent(79, 1073741903, 0));
+							case "up" -> {
+								net.minecraft.client.input.KeyEvent upEvt = new net.minecraft.client.input.KeyEvent(82, 1073741899, 0);
+								if (suggestions == null || !suggestions.keyPressed(upEvt)) {
+									chatScreen.keyPressed(upEvt);
+								}
+							}
+							case "down" -> {
+								net.minecraft.client.input.KeyEvent downEvt = new net.minecraft.client.input.KeyEvent(81, 1073741900, 0);
+								if (suggestions == null || !suggestions.keyPressed(downEvt)) {
+									chatScreen.keyPressed(downEvt);
+								}
+							}
+							default -> {
+							}
+						}
+					} else {
+						switch (k) {
+							case "enter" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(40, 13, 0));
+							case "escape" -> {
+								minecraft.gui.screen().onClose();
+								minecraft.gui.setScreen(null);
+							}
+							case "backspace" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(42, 8, 0));
+							case "tab" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(43, 9, 0));
+							case "left" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(80, 1073741904, 0));
+							case "right" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(79, 1073741903, 0));
+							case "up" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(82, 1073741899, 0));
+							case "down" -> minecraft.gui.screen().keyPressed(new net.minecraft.client.input.KeyEvent(81, 1073741900, 0));
+							default -> {
+							}
 						}
 					}
 				}

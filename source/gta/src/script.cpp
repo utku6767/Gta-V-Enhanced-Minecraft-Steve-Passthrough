@@ -2404,10 +2404,10 @@ namespace
 			natives::SetCurrentPedWeapon(ped, kWeaponUnarmed, TRUE);
 		}
 
-		// Tab: next gun, then back to Minecraft's blocks (not while flying)
-		if (natives::IsDisabledControlJustPressed(0, 37) && !g_drive.on)
+		// Tab: next gun, then back to Minecraft's blocks (not while flying or in pause/chat)
+		if (natives::IsDisabledControlJustPressed(0, 37) && !g_drive.on && !g_pause_mode && !g_chat_mode)
 			gun_set(ped, g_gun + 1 < int(std::size(kGuns)) ? g_gun + 1 : -1);
-		const bool gun = g_gun >= 0 && !g_drive.on;
+		const bool gun = g_gun >= 0 && !g_drive.on && !g_chat_mode && !g_inv_mode;
 		for (int control : kDisabledControls)
 			if (!gun || std::find(std::begin(kGunControls), std::end(kGunControls), control) == std::end(kGunControls))
 				natives::DisableControlAction(0, control, TRUE);
@@ -2427,13 +2427,16 @@ namespace
 		}
 		aim_cam_tick(gun && natives::IsPlayerFreeAiming(natives::PlayerId()));
 		gun_model_tick(ped, gun && !natives::IsPauseMenuActive());
-		if (natives::IsDisabledControlJustPressed(0, 14) || natives::IsDisabledControlJustPressed(0, 16))
-			g_ws.send("{\"t\":\"scroll\",\"d\":-1}");
-		if (natives::IsDisabledControlJustPressed(0, 15) || natives::IsDisabledControlJustPressed(0, 17))
-			g_ws.send("{\"t\":\"scroll\",\"d\":1}");
-		for (int i = 0; i < 9; ++i)
-			if (natives::IsDisabledControlJustPressed(0, kHotbarControls[i]))
-				sendf("{\"t\":\"slot\",\"n\":%d}", i);
+		if (!g_chat_mode && !g_inv_mode)
+		{
+			if (natives::IsDisabledControlJustPressed(0, 14) || natives::IsDisabledControlJustPressed(0, 16))
+				g_ws.send("{\"t\":\"scroll\",\"d\":-1}");
+			if (natives::IsDisabledControlJustPressed(0, 15) || natives::IsDisabledControlJustPressed(0, 17))
+				g_ws.send("{\"t\":\"scroll\",\"d\":1}");
+			for (int i = 0; i < 9; ++i)
+				if (natives::IsDisabledControlJustPressed(0, kHotbarControls[i]))
+					sendf("{\"t\":\"slot\",\"n\":%d}", i);
+		}
 
 		if (g_chat_notify.exchange(false))
 			natives::Notify("Minecraft Chat ~g~OPEN~s~ (Type, Enter/ESC to exit)");
