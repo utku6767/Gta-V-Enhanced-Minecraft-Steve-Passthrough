@@ -124,9 +124,20 @@ public final class MobWar {
 			|| e instanceof net.minecraft.world.entity.monster.Strider;
 	}
 
-	/** Mobs that join the fight: hostile, goal-driven ones. */
+	public static boolean isDefender(final Entity e) {
+		return (e instanceof net.minecraft.world.entity.animal.golem.IronGolem golem && golem.isAlive())
+			|| (e instanceof net.minecraft.world.entity.animal.wolf.Wolf wolf && wolf.isAlive());
+	}
+
+	/** Mobs that join the fight: hostile, goal-driven ones as well as friendly defenders (wolves, iron golems). */
 	private static boolean fighter(final Entity e) {
-		return e instanceof Mob && e instanceof Enemy && !isProxy(e) && !BRAIN_MOBS.contains(BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).getPath());
+		if (e == null || isProxy(e) || !e.isAlive()) {
+			return false;
+		}
+		if (isDefender(e)) {
+			return true;
+		}
+		return e instanceof Mob && e instanceof Enemy && !BRAIN_MOBS.contains(BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()).getPath());
 	}
 
 	public static void peds(final double[] flat) {
@@ -527,10 +538,119 @@ public final class MobWar {
 		for (Entity e : level.getAllEntities()) {
 			if (e instanceof net.minecraft.world.entity.animal.golem.IronGolem golem && golem.isAlive()) {
 				checkDefenderTarget(golem, 32.0);
+				protectDefender(level, golem);
 			} else if (e instanceof net.minecraft.world.entity.animal.wolf.Wolf wolf && wolf.isAlive() && wolf.isTame() && !wolf.isOrderedToSit()) {
 				checkDefenderTarget(wolf, 24.0);
+				protectDefender(level, wolf);
+			} else if (e instanceof net.minecraft.world.entity.animal.wolf.Wolf wolf && wolf.isAlive()) {
+				protectDefender(level, wolf);
 			}
 		}
+	}
+
+	private static void protectDefender(final ServerLevel level, final Mob defender) {
+		double ground = findDefenderGroundLevel(level, defender);
+		if (Double.isNaN(ground)) {
+			return;
+		}
+
+		// Anti-fall ground anchoring: prevent clipping or falling below world ground
+		if (defender.getY() < ground) {
+			defender.setPos(defender.getX(), ground, defender.getZ());
+			defender.fallDistance = 0.0F;
+			Vec3 vel = defender.getDeltaMovement();
+			if (vel.y < 0) {
+				defender.setDeltaMovement(vel.x, 0.0, vel.z);
+			}
+		}
+
+		int ex = (int) Math.floor(defender.getX());
+		int ez = (int) Math.floor(defender.getZ());
+		int gy = (int) Math.floor(ground) - 1;
+
+		Vec3 vel = defender.getDeltaMovement();
+		int nextX = (int) Math.floor(defender.getX() + vel.x * 2.0);
+		int nextZ = (int) Math.floor(defender.getZ() + vel.z * 2.0);
+
+		ensureDefenderGround(ex, ez, gy);
+		if (nextX != ex || nextZ != ez) {
+			ensureDefenderGround(nextX, nextZ, gy);
+		}
+	}
+
+	private static double findDefenderGroundLevel(final ServerLevel level, final Entity entity) {
+		BlockPos.MutableBlockPos p = new BlockPos.MutableBlockPos();
+		int ex = (int) Math.floor(entity.getX());
+		int ez = (int) Math.floor(entity.getZ());
+		int ey = (int) Math.floor(entity.getY());
+
+		// 1. Scan locally (including up to 6 blocks above entity Y in case it clipped down, and 32 blocks below)
+		int startY = Math.min(ey + 6, level.getMaxY() - 1);
+		int minY = Math.max(level.getMinY(), ey - 32);
+		double highestGround = Double.NaN;
+
+		for (int dx = -1; dx <= 1; dx++) {
+			for (int dz = -1; dz <= 1; dz++) {
+				for (int y = startY; y >= minY; y--) {
+					p.set(ex + dx, y, ez + dz);
+					if (level.isInWorldBounds(p)) {
+						var state = level.getBlockState(p);
+						if (!state.isAir() && state.getFluidState().isEmpty()) {
+							double g = p.getY() + 1.0;
+							if (Double.isNaN(highestGround) || g > highestGround) {
+								highestGround = g;
+							}
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		if (!Double.isNaN(highestGround)) {
+			return highestGround;
+		}
+
+		// 2. Fallback when collision isn't loaded: use nearest GTA ped proxy height
+		double bestDistSq = Double.MAX_VALUE;
+		double refGroundY = Double.NaN;
+		for (Villager v : proxies.values()) {
+			if (v != null && !v.isRemoved()) {
+				double dx = v.getX() - entity.getX();
+				double dz = v.getZ() - entity.getZ();
+				double d2 = dx * dx + dz * dz;
+				if (d2 < bestDistSq) {
+					bestDistSq = d2;
+					refGroundY = v.getY();
+				}
+			}
+		}
+
+		if (!Double.isNaN(refGroundY) && bestDistSq < 150.0 * 150.0) {
+			return refGroundY;
+		}
+
+		// 3. Fallback to first player's feet height
+		ServerPlayer player = level.getServer().getPlayerList().getPlayers().isEmpty() ? null : level.getServer().getPlayerList().getPlayers().get(0);
+		if (player != null) {
+			return player.getY();
+		}
+
+		return 0.0;
+	}
+
+	private static void ensureDefenderGround(final int cx, final int cz, final int gy) {
+		WorldBridge.solid(new int[] {
+			cx - 1, cz - 1, gy - 1, gy,
+			cx,     cz - 1, gy - 1, gy,
+			cx + 1, cz - 1, gy - 1, gy,
+			cx - 1, cz,     gy - 1, gy,
+			cx,     cz,     gy - 1, gy,
+			cx + 1, cz,     gy - 1, gy,
+			cx - 1, cz + 1, gy - 1, gy,
+			cx,     cz + 1, gy - 1, gy,
+			cx + 1, cz + 1, gy - 1, gy
+		});
 	}
 
 	private static void checkDefenderTarget(final Mob defender, final double range) {
@@ -735,7 +855,7 @@ public final class MobWar {
 	static void discardFighters(final ServerLevel level) {
 		List<Entity> all = new ArrayList<>();
 		level.getAllEntities().forEach(all::add);
-		all.stream().filter(e -> fighter(e) || isProxy(e) || isNetherMob(e)).forEach(Entity::discard);
+		all.stream().filter(e -> (fighter(e) && !isDefender(e)) || isProxy(e) || isNetherMob(e)).forEach(Entity::discard);
 	}
 
 	/** The host went away: nobody left to hunt. */
