@@ -54,7 +54,7 @@ namespace natives
 	inline Entity GetCurrentPedWeaponEntityIndex(Ped p) { return invoke<Entity>(0x3B390A939AF0B5FC, p, 0); }
 	inline void SetPedInfiniteAmmoClip(Ped p, BOOL on) { invoke<Void>(0x183DADC6AA953186, p, on); }
 	inline void ShowHudComponentThisFrame(int id) { invoke<Void>(0x0B4DF1FA60C0E664, id); }
-	inline void SetPedCurrentWeaponVisible(Ped p, BOOL visible) { invoke<Void>(0x0725A4CCFDED9A70, p, visible, TRUE, TRUE, TRUE); }
+	inline void SetPedCurrentWeaponVisible(Ped p, BOOL visible, BOOL deselectWeapon = FALSE) { invoke<Void>(0x0725A4CCFDED9A70, p, visible, deselectWeapon, TRUE, TRUE); }
 	inline BOOL IsPlayerFreeAiming(Player p) { return invoke<BOOL>(0x2E397FD2ECD37C87, p); }
 	inline BOOL GetCurrentPedWeapon(Ped p, Hash *weapon, BOOL p2) { return invoke<BOOL>(0x3A87E44BB9A01D54, p, weapon, p2); }
 	inline BOOL IsPedShooting(Ped p) { return invoke<BOOL>(0x34FF9636545E4A34, p); }
@@ -110,7 +110,7 @@ namespace natives
 	inline int GetEntityType(Entity e) { return invoke<int>(0x8ACD366038D14505, e); }
 	inline void ShootSingleBulletBetweenCoords(float x1, float y1, float z1, float x2, float y2, float z2, int damage, Hash weapon, Ped owner)
 	{
-		invoke<Void>(0x867654CBC7606F2C, x1, y1, z1, x2, y2, z2, damage, TRUE, weapon, owner, TRUE, TRUE, -1.0f);
+		invoke<Void>(0x867654CBC7606F2C, x1, y1, z1, x2, y2, z2, damage, TRUE, weapon, owner, TRUE, FALSE, -1.0f);
 	}
 	inline void SetPedToRagdoll(Ped p, int time1, int time2, int type, BOOL p4, BOOL p5, BOOL p6)
 	{

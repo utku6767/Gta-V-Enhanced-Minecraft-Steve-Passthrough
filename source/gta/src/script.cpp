@@ -451,8 +451,8 @@ namespace
 	/// renders (the aim camera is moved out past Steve's head, so that isn't the middle of the screen).
 	void reticle_tick(Ped ped)
 	{
-		const Vector3 c = natives::GetGameplayCamCoord();
-		const Vector3 r = natives::GetGameplayCamRot(2);
+		const Vector3 c = natives::GetFinalRenderedCamCoord();
+		const Vector3 r = natives::GetFinalRenderedCamRot(2);
 		const float d2r = 3.14159265f / 180.0f, h = r.z * d2r, pt = r.x * d2r;
 		const float fx = -std::sin(h) * std::cos(pt), fy = std::cos(h) * std::cos(pt), fz = std::sin(pt);
 		float tx = c.x + fx * 150.0f, ty = c.y + fy * 150.0f, tz = c.z + fz * 150.0f;
@@ -2441,9 +2441,13 @@ namespace
 		{
 			// Hide the GTA ped's native weapon to eliminate duplicate/double guns;
 			// only the model attached to Steve's hands (g_gunFit.held) is displayed.
-			natives::SetPedCurrentWeaponVisible(ped, FALSE);
+			natives::SetPedCurrentWeaponVisible(ped, FALSE, FALSE);
 			if (const Entity w = natives::GetCurrentPedWeaponEntityIndex(ped))
+			{
 				natives::SetEntityVisible(w, FALSE, FALSE);
+				natives::SetEntityAlpha(w, 0);
+				natives::SetEntityLocallyInvisible(w);
+			}
 			reticle_tick(ped);
 
 			// Direct shots accurately to the custom crosshair's world point
@@ -2453,7 +2457,7 @@ namespace
 				if (natives::GetCurrentPedWeapon(ped, &curWeap, TRUE))
 				{
 					Vector3 muzzle = g_gunFit.held ? natives::GetEntityCoords(g_gunFit.held, TRUE) : natives::GetEntityCoords(ped, TRUE);
-					const Vector3 r = natives::GetGameplayCamRot(2);
+					const Vector3 r = natives::GetFinalRenderedCamRot(2);
 					const float d2r = 3.14159265f / 180.0f, h = r.z * d2r, pt = r.x * d2r;
 					const float fx = -std::sin(h) * std::cos(pt), fy = std::cos(h) * std::cos(pt), fz = std::sin(pt);
 					muzzle.x += fx * 0.6f;
