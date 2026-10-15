@@ -2607,27 +2607,31 @@ namespace
 				natives::DisableAllControlActions(1);
 				natives::DisableAllControlActions(2);
 
-				// Smooth directional movement while holding arrow keys
-				const float speed = 0.0075f;
+				// Smooth directional movement while holding arrow keys (calibrated by aspect ratio so up/down and left/right move at identical screen speeds)
+				int scrW = 1920, scrH = 1080;
+				natives::GetActualScreenResolution(&scrW, &scrH);
+				const float aspect = (scrH > 0 && scrW > 0) ? (float)scrW / (float)scrH : (16.0f / 9.0f);
+				const float speedX = 0.0075f;
+				const float speedY = speedX * aspect;
 				bool moved = false;
 				if (GetAsyncKeyState(VK_LEFT) & 0x8000)
 				{
-					g_cursor_x -= speed;
+					g_cursor_x -= speedX;
 					moved = true;
 				}
 				if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
 				{
-					g_cursor_x += speed;
+					g_cursor_x += speedX;
 					moved = true;
 				}
 				if (GetAsyncKeyState(VK_UP) & 0x8000)
 				{
-					g_cursor_y -= speed;
+					g_cursor_y -= speedY;
 					moved = true;
 				}
 				if (GetAsyncKeyState(VK_DOWN) & 0x8000)
 				{
-					g_cursor_y += speed;
+					g_cursor_y += speedY;
 					moved = true;
 				}
 				g_cursor_x = std::clamp(g_cursor_x, 0.02f, 0.98f);
@@ -2733,28 +2737,32 @@ namespace
 				}
 				if (!wasDownBefore)
 				{
-					const float step = 0.016f;
+					int scrW = 1920, scrH = 1080;
+					natives::GetActualScreenResolution(&scrW, &scrH);
+					const float aspect = (scrH > 0 && scrW > 0) ? (float)scrW / (float)scrH : (16.0f / 9.0f);
+					const float stepX = 0.016f;
+					const float stepY = stepX * aspect;
 					if (key == VK_LEFT)
 					{
-						g_cursor_x = std::clamp(g_cursor_x - step, 0.02f, 0.98f);
+						g_cursor_x = std::clamp(g_cursor_x - stepX, 0.02f, 0.98f);
 						sendf("{\"t\":\"inv_move\",\"x\":%.4f,\"y\":%.4f}", g_cursor_x, g_cursor_y);
 						return;
 					}
 					if (key == VK_RIGHT)
 					{
-						g_cursor_x = std::clamp(g_cursor_x + step, 0.02f, 0.98f);
+						g_cursor_x = std::clamp(g_cursor_x + stepX, 0.02f, 0.98f);
 						sendf("{\"t\":\"inv_move\",\"x\":%.4f,\"y\":%.4f}", g_cursor_x, g_cursor_y);
 						return;
 					}
 					if (key == VK_UP)
 					{
-						g_cursor_y = std::clamp(g_cursor_y - step, 0.02f, 0.98f);
-						sendf("{\"t\":\"inv_move\",\"x\":%.4f,\"y\":%.4f}", g_cursor_y, g_cursor_y);
+						g_cursor_y = std::clamp(g_cursor_y - stepY, 0.02f, 0.98f);
+						sendf("{\"t\":\"inv_move\",\"x\":%.4f,\"y\":%.4f}", g_cursor_x, g_cursor_y);
 						return;
 					}
 					if (key == VK_DOWN)
 					{
-						g_cursor_y = std::clamp(g_cursor_y + step, 0.02f, 0.98f);
+						g_cursor_y = std::clamp(g_cursor_y + stepY, 0.02f, 0.98f);
 						sendf("{\"t\":\"inv_move\",\"x\":%.4f,\"y\":%.4f}", g_cursor_x, g_cursor_y);
 						return;
 					}
