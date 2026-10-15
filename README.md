@@ -159,3 +159,29 @@ We added hooking and pulling NPCs via a fishing hook:
 - Upon connecting, the Fabric mod sends a `"hook"` JSON message to GTA V via WebSocket. The target NPC is snagged while remaining standing upright on their feet without falling over or stumbling prematurely.
 - When the player reels in (`retrieve`), a `"reel"` message is dispatched.
 - The C++ ASI script responds by putting the NPC into full ragdoll, dragging them cleanly out of vehicles if seated, and applying high-velocity physical impulses (`ApplyForceToEntity`) scaling up to $32.0\text{f}$ horizontally and $26.0\text{f}$ vertically towards and upward relative to the player's position.
+
+## Updates
+
+### Version 1.4
+- **Fishing Hook & Reel Physics:** Added hooking and pulling NPCs via a fishing hook. Snag pedestrians or police officers with your Minecraft fishing rod. Hooking an NPC locks onto them while keeping them standing upright on their feet without falling over. When reeling in, the target is launched into ragdoll physics and yanked directly towards you through the air with high-velocity physical impulses (scaling up to $32.0\text{f}$ horizontally and $26.0\text{f}$ vertically)—dragging drivers cleanly out of vehicles, flinging pedestrians across intersections, or hoisting them high onto rooftops.
+- **Virtual Cursor Equalization:** Added virtual mouse cursor for navigating and clicking items inside the Minecraft inventory during Pause mode (**E**), and made the virtual cursor's axes movement speed equal across both horizontal and vertical directions.
+
+### Version 1.3
+- **Returning from the Nether:** Stepping back into a lit Nether portal for 1 second safely deactivates the Nether, restoring the original terrain top-down, clearing Nether mobs, removing the red sky modifier, and resetting the sun to noon.
+- **Nether Bed Explosions:** Beds placed during Nether mode now explode upon right-click/sleep with synchronized GTA explosions.
+- **Wither and Ender Dragon Aerial Boss Mechanics:** Added working Wither combat with strafing runs and exploding heads bombarding the streets, plus the Ender Dragon launching explosive dragon fireballs and diving down through the avenues to ragdoll NPCs and toss vehicles into the air, backed by void fall protection.
+- **Water Current Ragdolls:** Flowing and source water transfers velocity vectors to GTA peds, tripping them into ragdoll and flushing them downstream until they exit the current.
+- **Pause / Break Mode:** Press Pause/Break to block GTA vehicle entry and menus. Allows swapping items to offhand with **F**, and opening the Minecraft chat with typing redirection, history, and Tab auto-complete via **T**.
+- **Enhanced GTA Weapon Handling:** Press Tab to cycle GTA weapons (Carbine Rifle, Minigun, RPG) directly in Steve's hands with custom hand fitting and crosshair ballistics.
+- **Iron Golems & Wolves Attack NPCs:** Added Iron Golems and wolves attacking NPCs and hostile police. Fully synchronized with GTA double peds so police and firearms can target and shoot them, fortified with proactive $3\times 3$ barrier foundations and vertical anti-fall locks.
+
+### Version 1.2
+- **Aim Snapping:** Added aim snapping, which matches Steve's rotation to where you're looking while aiming, toggled via Page Down.
+- **Elytra Hotkeys & Auto-Launch:** Added End key to arm Elytra flight and double-tapping Space to auto-launch the player 10 blocks high for immediate flight.
+- **Custom Skin Hot-Swap:** Added custom skin hot-swapping via NumLock with `custom_skin.png` and `default_skin.png` in the `passthrough` folder.
+
+### Version 1.1
+- **Survival / Creative Toggles:** Added Insert to switch to Survival mode and Delete for Creative mode.
+- **Terrain Re-level:** Added F8 to re-level Minecraft ground to the player's current elevation.
+- **Elytra Arming & Wanted Toggle:** Added Home key to arm Elytra flight and Page Up to toggle GTA wanted star accumulation.
+
