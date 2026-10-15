@@ -1988,10 +1988,80 @@ namespace
 		}
 	}
 
+	void hook_message(const std::string &message)
+	{
+		const int handle = int(json_num(message, "h", 0));
+		if (handle <= 0)
+			return;
+		const Ped ped = (Ped)handle;
+		const Ped player = natives::PlayerPedId();
+		if (!natives::DoesEntityExist(ped) || natives::IsPedDeadOrDying(ped) || ped == player || natives::IsPedAPlayer(ped) || g_doublePeds.count(ped))
+			return;
+
+		// Brief flinch / stumble upon initial connection
+		if (!natives::IsPedRagdoll(ped))
+		{
+			natives::SetPedToRagdoll(ped, 800);
+		}
+	}
+
+	void reel_message(const std::string &message)
+	{
+		const int handle = int(json_num(message, "h", 0));
+		if (handle <= 0)
+			return;
+		const Ped ped = (Ped)handle;
+		const Ped player = natives::PlayerPedId();
+		if (!natives::DoesEntityExist(ped) || natives::IsPedDeadOrDying(ped) || ped == player || natives::IsPedAPlayer(ped) || g_doublePeds.count(ped))
+			return;
+
+		if (natives::IsPedInAnyVehicle(ped, FALSE))
+		{
+			natives::ClearPedTasks(ped);
+		}
+
+		// Full ragdoll response and physical impulse towards player
+		natives::SetPedToRagdoll(ped, 4000);
+		natives::ApplyDamageToPed(ped, 15);
+
+		const Vector3 me = natives::GetEntityCoords(player, TRUE);
+		const Vector3 o = natives::GetEntityCoords(ped, TRUE);
+		const float dx = me.x - o.x;
+		const float dy = me.y - o.y;
+		const float dz = me.z - o.z;
+		const float d = std::sqrt(dx * dx + dy * dy);
+
+		if (d > 0.1f)
+		{
+			const float fx = dx / d;
+			const float fy = dy / d;
+			// Horizontal pull force scales with distance (14.0f to 32.0f)
+			const float pullH = std::min(32.0f, std::max(14.0f, d * 1.35f));
+			// Upward vertical force: launches ped up and towards the player
+			const float pullUp = std::min(26.0f, std::max(7.0f, dz * 0.95f + 6.5f));
+
+			natives::ApplyForceToEntity(ped, fx * pullH, fy * pullH, pullUp);
+		}
+		else
+		{
+			natives::ApplyForceToEntity(ped, 0.0f, 0.0f, 15.0f);
+		}
+	}
+
 	/// Messages from Minecraft: explosions become GTA explosions at the same spot; director commands.
 	void handle_event(const std::string &message)
 	{
 		const std::string type = json_str(message, "t");
+		if (type == "hook")
+		{
+			hook_message(message);
+			return;
+		}
+		if (type == "reel")
+		{
+			reel_message(message);
+			return;
+		}
 		if (type == "waterpeds")
 		{
 			water_peds_message(message);

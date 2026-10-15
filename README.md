@@ -23,6 +23,7 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 - **Wither & Ender Dragon Boss Mechanics.** Full aerial combat boss fights over Los Santos with explosive heads, fireballs, and street-level diving attacks, backed by anti-fall void protection:
   - **Wither**: Hovers and executes low strafing runs across Los Santos, bombarding traffic, cops, and pedestrians with volleys of exploding wither skull heads that trigger synchronized GTA explosions, while automatically regulating its combat altitude to stay within an ideal $3.5\text{-block}$ bombing height above street targets.
   - **Ender Dragon**: Circles the skyline, bombards the ground with explosive dragon fireballs, and executes devastating low-altitude dive-bombs through the city streets that plow into pedestrians and vehicles, ragdolling NPCs and launching them into the air. Rebuilt with a 3-phase Close Air Support (CAS) state machine (`CIRCLING` orbit with fireball artillery, low-altitude `SWEEP_DIVE` buzzing streets $1.5\text{ m}$ off the ground while ragdolling pedestrians with up to $30.0\text{f}$ impact force, and rapid `PULL_UP` altitude recovery).
+- **Fishing Hook & Ragdoll Physics.** Snag pedestrians or police officers with your Minecraft fishing rod. When you right-click to reel in, the target is launched into ragdoll physics and yanked towards you through the air with physical impulses up to $32.0\text{f}$ horizontally and $26.0\text{f}$ vertically (dragging drivers out of vehicles, flinging pedestrians across the street, or hoisting them onto rooftops).
 - **Pause Mode, Virtual Mouse & In-Game Chat.** Pressing **Pause / Break** toggles Pause mode, disabling GTA menus and vehicle entry:
   - **F**: Swaps items between main hand and offhand in Minecraft.
   - **E**: Opens the Minecraft Inventory with a **Virtual Mouse** cursor (Arrow Keys to navigate, Enter to click/pick up items, Esc or E to close).
@@ -151,11 +152,10 @@ MIT, see [LICENSE](LICENSE). ScriptHookV, ReShade and Minecraft are not included
 
 Minecraft belongs to Mojang Studios and Microsoft. GTA V belongs to Rockstar Games and Take-Two. This is a fan project and is not affiliated with them.
 
-## Abandoned Experiments: Fishing Hook
+## Fishing Hook & Reel Physics
 
-The fishing hook feature was attempted but eventually abandoned. In theory, it was designed to work as follows:
-- The Minecraft `FishingHook` entity would successfully hit the invisible proxy entity representing a GTA ped.
-- Upon connecting, the Fabric mod would send a `"hook"` JSON message to GTA V via WebSocket.
-- When the player triggered the rod's pull/retrieve action, a `"reel"` message would be sent.
-- The C++ ASI script would respond by ragdolling the ped and applying a physical impulse (`ApplyForceToEntityWithOffset`).
-- Depending on the player's relative angle, directional force would be applied to the ped's legs: pulling from the front would apply force from the back of the legs to ragdoll them forward. Pulling from vertically above would apply an upward force directly through the feet, launching the ragdolled ped straight up towards the player.
+The fishing hook feature connects Minecraft's fishing rod to GTA V pedestrians:
+- The Minecraft `FishingHook` entity connects with the villager proxy entity representing a GTA ped.
+- Upon connecting, the Fabric mod sends a `"hook"` JSON message to GTA V via WebSocket, triggering an initial stumble on the target.
+- When the player reels in (`retrieve`), a `"reel"` message is dispatched.
+- The C++ ASI script responds by putting the ped into full ragdoll, dragging them out of vehicles if seated, and applying high-velocity physical impulses (`ApplyForceToEntity`) towards and upward relative to the player's position.

@@ -129,6 +129,10 @@ public final class MobWar {
 			|| (e instanceof net.minecraft.world.entity.animal.wolf.Wolf wolf && wolf.isAlive());
 	}
 
+	public static Integer getHandle(final Entity e) {
+		return e != null ? handleOf.get(e.getId()) : null;
+	}
+
 	/** Mobs that join the fight: hostile, goal-driven ones as well as friendly defenders (wolves, iron golems). */
 	private static boolean fighter(final Entity e) {
 		if (e == null || isProxy(e) || !e.isAlive()) {
