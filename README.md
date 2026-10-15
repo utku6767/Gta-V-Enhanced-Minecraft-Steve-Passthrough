@@ -13,7 +13,7 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 - **Minecraft weapons, GTA effects.** Arrows land as GTA bullets, crossbow fireworks burst as GTA rockets, sword swings send people flying and launch cars, and ender pearls move GTA's player.
 - **Elytra flight.** Minecraft physics fly Steve, and GTA follows with a chase camera. Double-tapping Space auto-launches you 10 blocks high for immediate takeoff.
 - **Mobs vs police.** Hostile mobs hunt GTA's people, the police shoot back, and damage crosses over both ways.
-- **Iron Golems & Wolves (Defenders).** Iron Golems and wolves actively hunt down hostile GTA police and armed assailants. They are fully synchronized with GTA double peds so police and firearms can target and shoot them. Equipped with proactive $3\times 3$ barrier foundations and vertical anti-fall locks to keep them permanently grounded.
+- **Iron Golems & Wolves (Defenders).** Iron Golems and wolves attacking NPCs and hostile police. Tamed wolves and iron golems actively hunt down and attack nearby NPCs, armed assailants, and cops. They are fully synchronized with GTA double peds so police and firearms can target and shoot them. Equipped with proactive $3\times 3$ barrier foundations and vertical anti-fall locks to keep them permanently grounded.
 - **Native Survival & Shields.** Steve is spawned in Creative but can toggle Survival mode. GTA V bullet damage bridges to Minecraft. Blocking with a shield neutralizes police bullets; otherwise, Steve takes raw damage.
 - **Aim snapping.** Snaps the GTA V player crosshair to where the Minecraft character is looking when aiming with a bow or crossbow (toggle with Page Down).
 - **Skin swapping.** Press NumLock to hot-swap your skin. Place `custom_skin.png` and `default_skin.png` in a `passthrough` folder alongside your Minecraft `mods` folder (i.e., `../passthrough/`).
@@ -23,7 +23,7 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 - **Wither & Ender Dragon Boss Mechanics.** Full aerial combat boss fights over Los Santos with explosive heads, fireballs, and street-level diving attacks, backed by anti-fall void protection:
   - **Wither**: Hovers and executes low strafing runs across Los Santos, bombarding traffic, cops, and pedestrians with volleys of exploding wither skull heads that trigger synchronized GTA explosions, while automatically regulating its combat altitude to stay within an ideal $3.5\text{-block}$ bombing height above street targets.
   - **Ender Dragon**: Circles the skyline, bombards the ground with explosive dragon fireballs, and executes devastating low-altitude dive-bombs through the city streets that plow into pedestrians and vehicles, ragdolling NPCs and launching them into the air. Rebuilt with a 3-phase Close Air Support (CAS) state machine (`CIRCLING` orbit with fireball artillery, low-altitude `SWEEP_DIVE` buzzing streets $1.5\text{ m}$ off the ground while ragdolling pedestrians with up to $30.0\text{f}$ impact force, and rapid `PULL_UP` altitude recovery).
-- **Fishing Hook & Ragdoll Physics.** Snag pedestrians or police officers with your Minecraft fishing rod. When you right-click to reel in, the target is launched into ragdoll physics and yanked towards you through the air with physical impulses up to $32.0\text{f}$ horizontally and $26.0\text{f}$ vertically (dragging drivers out of vehicles, flinging pedestrians across the street, or hoisting them onto rooftops).
+- **Fishing Hook & Ragdoll Physics.** We added hooking and pulling NPCs via a fishing hook. Snag pedestrians or police officers with your Minecraft fishing rod. Hooking an NPC locks onto them while keeping them standing upright on their feet without falling over. When you right-click to reel in, the target is immediately launched into full ragdoll physics and yanked directly towards you through the air with high-velocity physical impulses (scaling up to $32.0\text{f}$ horizontally and $26.0\text{f}$ vertically)—dragging drivers cleanly out of vehicles, flinging pedestrians across intersections, or hoisting them high onto rooftops.
 - **Pause Mode, Virtual Mouse & In-Game Chat.** Pressing **Pause / Break** toggles Pause mode, disabling GTA menus and vehicle entry:
   - **F**: Swaps items between main hand and offhand in Minecraft.
   - **E**: Opens the Minecraft Inventory with a **Virtual Mouse** cursor (Arrow Keys to navigate, Enter to click/pick up items, Esc or E to close).
@@ -154,8 +154,8 @@ Minecraft belongs to Mojang Studios and Microsoft. GTA V belongs to Rockstar Gam
 
 ## Fishing Hook & Reel Physics
 
-The fishing hook feature connects Minecraft's fishing rod to GTA V pedestrians:
+We added hooking and pulling NPCs via a fishing hook:
 - The Minecraft `FishingHook` entity connects with the villager proxy entity representing a GTA ped.
-- Upon connecting, the Fabric mod sends a `"hook"` JSON message to GTA V via WebSocket, triggering an initial stumble on the target.
+- Upon connecting, the Fabric mod sends a `"hook"` JSON message to GTA V via WebSocket. The target NPC is snagged while remaining standing upright on their feet without falling over or stumbling prematurely.
 - When the player reels in (`retrieve`), a `"reel"` message is dispatched.
-- The C++ ASI script responds by putting the ped into full ragdoll, dragging them out of vehicles if seated, and applying high-velocity physical impulses (`ApplyForceToEntity`) towards and upward relative to the player's position.
+- The C++ ASI script responds by putting the NPC into full ragdoll, dragging them cleanly out of vehicles if seated, and applying high-velocity physical impulses (`ApplyForceToEntity`) scaling up to $32.0\text{f}$ horizontally and $26.0\text{f}$ vertically towards and upward relative to the player's position.
