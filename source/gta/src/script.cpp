@@ -1990,19 +1990,7 @@ namespace
 
 	void hook_message(const std::string &message)
 	{
-		const int handle = int(json_num(message, "h", 0));
-		if (handle <= 0)
-			return;
-		const Ped ped = (Ped)handle;
-		const Ped player = natives::PlayerPedId();
-		if (!natives::DoesEntityExist(ped) || natives::IsPedDeadOrDying(ped) || ped == player || natives::IsPedAPlayer(ped) || g_doublePeds.count(ped))
-			return;
-
-		// Brief flinch / stumble upon initial connection
-		if (!natives::IsPedRagdoll(ped))
-		{
-			natives::SetPedToRagdoll(ped, 800);
-		}
+		// Hook connected: ped remains standing upright until reeled in
 	}
 
 	void reel_message(const std::string &message)
