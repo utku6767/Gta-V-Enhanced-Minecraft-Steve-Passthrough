@@ -26,7 +26,7 @@ This repo ships **precompiled files**, so you don't need to build anything. The 
 - **Fishing Hook & Ragdoll Physics.** We added hooking and pulling NPCs via a fishing hook. Snag pedestrians or police officers with your Minecraft fishing rod. Hooking an NPC locks onto them while keeping them standing upright on their feet without falling over. When you right-click to reel in, the target is immediately launched into full ragdoll physics and yanked directly towards you through the air with high-velocity physical impulses (scaling up to $32.0\text{f}$ horizontally and $26.0\text{f}$ vertically)—dragging drivers cleanly out of vehicles, flinging pedestrians across intersections, or hoisting them high onto rooftops.
 - **Pause Mode, Virtual Mouse & In-Game Chat.** Pressing **Pause / Break** toggles Pause mode, disabling GTA menus and vehicle entry:
   - **F**: Swaps items between main hand and offhand in Minecraft.
-  - **E**: Opens the Minecraft Inventory with a **Virtual Mouse** cursor (Arrow Keys to navigate, Enter to click/pick up items, Esc or E to close).
+  - **E**: Opens the Minecraft Inventory with a **Virtual Mouse** cursor (Arrow Keys to navigate, Enter to click/pick up items, Esc or E to close). We made the virtual cursor's axes movement speed equal.
   - **T**: Opens the Minecraft Chat screen. Redirects all typed characters, supports Backspace, Left/Right navigation, Up/Down message history, and **Tab** for command suggestions/auto-completion.
 - **Enhanced GTA Weapon Handling for Steve.** Pressing **Tab** cycles GTA weapons (Carbine Rifle, Minigun, RPG) directly into Steve's hands. Eliminates double-gun rendering artifacts, custom-fits weapons to Steve's hands, and aligns physical weapon muzzle trajectory directly with the on-screen crosshair.
 
@@ -109,7 +109,7 @@ The two games can start in either order. The plugin keeps trying to connect.
 | **NumLock** | Toggle custom skin override |
 | **Pause / Break** | Toggle Pause mode (redirects keys for offhand swap, virtual inventory mouse, and chat) |
 | **F** (in Pause mode) | Swap item with offhand in Minecraft |
-| **E** (in Pause mode) | Open Minecraft inventory with **Virtual Mouse** (Arrow keys move cursor, Enter clicks/picks items, Esc/E closes) |
+| **E** (in Pause mode) | Open Minecraft inventory with **Virtual Mouse** (Arrow keys move cursor with equalized axes speed, Enter clicks/picks items, Esc/E closes) |
 | **T** (in Pause mode) | Open Minecraft chat (Type to chat, Up/Down for message history, Tab for command suggestions, Enter sends, Esc cancels) |
 | Left mouse | Minecraft attack: break blocks, swing the sword, shoot GTA gun in gun mode |
 | Right mouse | Minecraft use: place blocks, light TNT, shoot, throw pearls, aim GTA gun in gun mode |
