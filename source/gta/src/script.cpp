@@ -42,6 +42,7 @@ namespace
 	{
 		float x, y, z;
 		bool firework;
+		bool snowball;
 		bool seen;
 	};
 	std::map<int, Projectile> g_projectiles;
@@ -559,6 +560,48 @@ namespace
 		g_drive.armed = false;
 	}
 
+	static std::unordered_map<Ped, int> g_snowballHitPeds;
+
+	void apply_snowball_knockback(Ped victim, float ux, float uy, float uz, const Vector3 &hitPos)
+	{
+		const int now = natives::GetGameTimer();
+		if (g_snowballHitPeds.size() > 64)
+		{
+			for (auto it = g_snowballHitPeds.begin(); it != g_snowballHitPeds.end();)
+				it = (now - it->second > 3000) ? g_snowballHitPeds.erase(it) : std::next(it);
+		}
+
+		auto it = g_snowballHitPeds.find(victim);
+		if (it != g_snowballHitPeds.end() && now - it->second < 400)
+			return;
+		g_snowballHitPeds[victim] = now;
+
+		if (natives::IsPedInAnyVehicle(victim, FALSE))
+		{
+			natives::ClearPedTasks(victim);
+		}
+
+		const Vector3 head = natives::GetPedBoneCoords(victim, 31086 /* SKEL_Head */, 0.0f, 0.0f, 0.0f);
+		// Hit from top of head: impact is near or above head bone and descending
+		const bool fromTop = (hitPos.z >= head.z - 0.05f) || (hitPos.z > head.z);
+
+		if (fromTop)
+		{
+			// Only collapse if hit from the top of the head
+			natives::SetPedToRagdoll(victim, 2500);
+			natives::ApplyForceToEntity(victim, 0.0f, 0.0f, -0.3f);
+		}
+		else
+		{
+			// Fall in the direction where the player threw
+			const float len = std::max(0.01f, std::sqrt(ux * ux + uy * uy));
+			const float fx = ux / len;
+			const float fy = uy / len;
+			natives::SetPedToRagdoll(victim, 2500);
+			natives::ApplyForceToEntity(victim, fx * 5.5f, fy * 5.5f, 1.2f);
+		}
+	}
+
 	/// A Minecraft projectile went from (ax..) to (bx..) this tick (GTA coordinates): if that crosses anything of GTA's,
 	/// a firework blows up there and an arrow lands a bullet in a person or car (or sticks in a wall), and
 	/// Minecraft is told where (so the rocket bursts / the arrow stops there too).
@@ -592,7 +635,15 @@ namespace
 		const float ux = dx / len, uy = dy / len, uz = dz / len;
 		const int kind = entity != 0 ? natives::GetEntityType(entity) : 0; // 1 ped, 2 vehicle, 3 object
 		bool stick = false;
-		if (pr.firework)
+		if (pr.snowball)
+		{
+			if (entity != 0 && kind == 1 && !g_doublePeds.count(entity) && entity != ped)
+			{
+				apply_snowball_knockback(entity, ux, uy, uz, end);
+			}
+			stick = false;
+		}
+		else if (pr.firework)
 		{
 			natives::AddExplosion(end.x, end.y, end.z, 4 /* rocket */, 1.0f, TRUE, FALSE, 0.3f, FALSE);
 			shake_from(end.x, end.y, end.z, 0.6f);
@@ -607,7 +658,7 @@ namespace
 		return true;
 	}
 
-	/// {"t":"proj","p":[[id,"arrow"|"firework",x,y,z],...]} (Minecraft coordinates), every tick while any fly.
+	/// {"t":"proj","p":[[id,"arrow"|"firework"|"snowball",x,y,z],...]} (Minecraft coordinates), every tick while any fly.
 	void projectiles_message(Ped ped, const std::string &message)
 	{
 		for (auto &[id, pr] : g_projectiles)
@@ -623,18 +674,20 @@ namespace
 				continue;
 			const float gx = float(x), gy = float(-z), gz = float(y) - g_yOffset;
 			auto it = g_projectiles.find(id);
+			const bool isFirework = std::strcmp(kind, "firework") == 0;
+			const bool isSnowball = std::strcmp(kind, "snowball") == 0;
 			// first sighting: trace from Steve's chest, so point-blank shots count
 			const Projectile from = it != g_projectiles.end() ? it->second
-				: Projectile{me.x, me.y, me.z + 0.4f, std::strcmp(kind, "firework") == 0, true};
+				: Projectile{me.x, me.y, me.z + 0.4f, isFirework, isSnowball, true};
 			if (projectile_segment(ped, id, from, gx, gy, gz))
 			{
 				if (it != g_projectiles.end())
 					g_projectiles.erase(it);
-				g_projectiles[id] = {gx, gy, gz, from.firework, true};
+				g_projectiles[id] = {gx, gy, gz, from.firework, from.snowball, true};
 				g_projectiles[id].seen = true;
 				continue;
 			}
-			g_projectiles[id] = {gx, gy, gz, from.firework, true};
+			g_projectiles[id] = {gx, gy, gz, from.firework, from.snowball, true};
 		}
 		for (auto it = g_projectiles.begin(); it != g_projectiles.end();)
 			it = it->second.seen ? std::next(it) : g_projectiles.erase(it);
@@ -2036,10 +2089,81 @@ namespace
 		}
 	}
 
+	void snowball_hit_message(const std::string &message)
+	{
+		const int handle = int(json_num(message, "h", 0));
+		if (handle <= 0)
+			return;
+		const Ped victim = (Ped)handle;
+		const Ped player = natives::PlayerPedId();
+		if (!natives::DoesEntityExist(victim) || natives::IsPedDeadOrDying(victim) || victim == player || natives::IsPedAPlayer(victim) || g_doublePeds.count(victim))
+			return;
+
+		const int now = natives::GetGameTimer();
+		if (g_snowballHitPeds.size() > 64)
+		{
+			for (auto it = g_snowballHitPeds.begin(); it != g_snowballHitPeds.end();)
+				it = (now - it->second > 3000) ? g_snowballHitPeds.erase(it) : std::next(it);
+		}
+
+		auto it = g_snowballHitPeds.find(victim);
+		if (it != g_snowballHitPeds.end() && now - it->second < 400)
+			return;
+		g_snowballHitPeds[victim] = now;
+
+		if (natives::IsPedInAnyVehicle(victim, FALSE))
+		{
+			natives::ClearPedTasks(victim);
+		}
+
+		const bool fromTop = json_str(message, "top") == "true";
+		if (fromTop)
+		{
+			natives::SetPedToRagdoll(victim, 2500);
+			natives::ApplyForceToEntity(victim, 0.0f, 0.0f, -0.3f);
+		}
+		else
+		{
+			const char *dirStr = json_value(message, "dir");
+			const char *fromStr = json_value(message, "from");
+			double dx = 0, dy = 0, dz = 0;
+			float fx = 0.0f, fy = 0.0f;
+			if (dirStr && sscanf_s(dirStr, "[%lf ,%lf ,%lf ]", &dx, &dy, &dz) == 3 && (dx * dx + dz * dz > 1.0E-4))
+			{
+				fx = float(dx);
+				fy = float(-dz);
+			}
+			else if (fromStr && sscanf_s(fromStr, "[%lf ,%lf ,%lf ]", &dx, &dy, &dz) == 3)
+			{
+				const Vector3 v = natives::GetEntityCoords(victim, TRUE);
+				fx = v.x - float(dx);
+				fy = v.y - float(-dz);
+			}
+			else
+			{
+				const Vector3 me = natives::GetEntityCoords(player, TRUE);
+				const Vector3 v = natives::GetEntityCoords(victim, TRUE);
+				fx = v.x - me.x;
+				fy = v.y - me.y;
+			}
+			const float len = std::max(0.01f, std::sqrt(fx * fx + fy * fy));
+			fx /= len;
+			fy /= len;
+
+			natives::SetPedToRagdoll(victim, 2500);
+			natives::ApplyForceToEntity(victim, fx * 5.5f, fy * 5.5f, 1.2f);
+		}
+	}
+
 	/// Messages from Minecraft: explosions become GTA explosions at the same spot; director commands.
 	void handle_event(const std::string &message)
 	{
 		const std::string type = json_str(message, "t");
+		if (type == "snowballhit")
+		{
+			snowball_hit_message(message);
+			return;
+		}
 		if (type == "hook")
 		{
 			hook_message(message);

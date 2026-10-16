@@ -19,7 +19,8 @@ abstract class ProjectileMixin {
 	@Inject(method = "canHitEntity(Lnet/minecraft/world/entity/Entity;)Z", at = @At("HEAD"), cancellable = true)
 	private void passthrough$throughProxies(final Entity target, final CallbackInfoReturnable<Boolean> cir) {
 		if (MobWar.isProxy(target) && this.getOwner() instanceof Player) {
-			if (!((Object) this instanceof net.minecraft.world.entity.projectile.FishingHook)) {
+			if (!((Object) this instanceof net.minecraft.world.entity.projectile.FishingHook)
+					&& !((Object) this instanceof net.minecraft.world.entity.projectile.throwableitemprojectile.Snowball)) {
 				cir.setReturnValue(false);
 			}
 		}

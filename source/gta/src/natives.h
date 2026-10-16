@@ -122,6 +122,10 @@ namespace natives
 	inline BOOL IsPedRagdoll(Ped p) { return invoke<BOOL>(0x47E4E977581C5B55, p); }
 	inline BOOL IsPedAPlayer(Ped p) { return invoke<BOOL>(0x12534C348C6CB68B, p); }
 	inline void ApplyDamageToPed(Ped p, int damage) { invoke<Void>(0x697157CED63F18D4, p, damage, FALSE, 0, 0); }
+	inline Vector3 GetPedBoneCoords(Ped p, int boneId, float offsetX, float offsetY, float offsetZ)
+	{
+		return invoke<Vector3>(0x17C07FC643E5955D, p, boneId, offsetX, offsetY, offsetZ);
+	}
 	inline void ApplyForceToEntity(Entity e, float x, float y, float z)
 	{
 		invoke<Void>(0xC5F68BE9613E2D18, e, 1, x, y, z, 0.0f, 0.0f, 0.0f, 0, FALSE, TRUE, TRUE, FALSE, TRUE);

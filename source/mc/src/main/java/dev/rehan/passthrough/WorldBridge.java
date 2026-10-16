@@ -147,6 +147,8 @@ public final class WorldBridge {
 				kind = "arrow";
 			} else if (e instanceof FireworkRocketEntity rocket && rocket.isShotAtAngle()) {
 				kind = "firework"; // not the ones boosting an elytra flight
+			} else if (e instanceof net.minecraft.world.entity.projectile.throwableitemprojectile.Snowball snowball && snowball.getDeltaMovement().lengthSqr() > 1.0E-4) {
+				kind = "snowball";
 			}
 
 			if (kind != null) {
@@ -186,6 +188,10 @@ public final class WorldBridge {
 				} else {
 					e.discard();
 				}
+			} else if (e instanceof net.minecraft.world.entity.projectile.throwableitemprojectile.Snowball) {
+				e.setPos(x, y, z);
+				level.broadcastEntityEvent(e, (byte) 3);
+				e.discard();
 			}
 		});
 	}
