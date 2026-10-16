@@ -164,9 +164,11 @@ We added hooking and pulling NPCs via a fishing hook:
 ## Updates
 
 ### Version 1.5
+- **Snowball Knockback & Directional Ragdoll:** Added Bedrock Edition snowball mechanics to Java, allowing snowballs to knock back mobs without dealing damage. Snowballs also knock down GTA V NPCs in the throw direction (e.g. hitting an NPC from the front knocks them backward), or cause them to collapse straight down if hit from the top of their head.
+
+### Version 1.4
 - **Fishing Hook & Reel Physics:** Added hooking and pulling NPCs via a fishing hook. Snag pedestrians or police officers with your Minecraft fishing rod. Hooking an NPC locks onto them while keeping them standing upright on their feet without falling over. When reeling in, the target is launched into ragdoll physics and yanked directly towards you through the air with high-velocity physical impulses (scaling up to $32.0\text{f}$ horizontally and $26.0\text{f}$ vertically)—dragging drivers cleanly out of vehicles, flinging pedestrians across intersections, or hoisting them high onto rooftops.
 - **Virtual Cursor Equalization:** Added virtual mouse cursor for navigating and clicking items inside the Minecraft inventory during Pause mode (**E**), and made the virtual cursor's axes movement speed equal across both horizontal and vertical directions.
-- **Snowball Knockback & Directional Ragdoll:** Added Bedrock Edition snowball mechanics to Java, allowing snowballs to knock back mobs without dealing damage. Snowballs also knock down GTA V NPCs in the throw direction (e.g. hitting an NPC from the front knocks them backward), or cause them to collapse straight down if hit from the top of their head.
 
 ### Version 1.3
 - **Returning from the Nether:** Stepping back into a lit Nether portal for 1 second safely deactivates the Nether, restoring the original terrain top-down, clearing Nether mobs, removing the red sky modifier, and resetting the sun to noon.
