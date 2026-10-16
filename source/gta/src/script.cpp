@@ -581,9 +581,10 @@ namespace
 			natives::ClearPedTasks(victim);
 		}
 
-		const Vector3 head = natives::GetPedBoneCoords(victim, 31086 /* SKEL_Head */, 0.0f, 0.0f, 0.0f);
-		// Hit from top of head: impact is near or above head bone and descending
-		const bool fromTop = (hitPos.z >= head.z - 0.05f) || (hitPos.z > head.z);
+		const Vector3 pedPos = natives::GetEntityCoords(victim, TRUE);
+		// In GTA V, GetEntityCoords for peds is at pelvic/mid height (~1.0m above feet).
+		// Head top is roughly pedPos.z + 0.60m to 0.85m.
+		const bool fromTop = (hitPos.z >= pedPos.z + 0.60f);
 
 		if (fromTop)
 		{
